@@ -10,12 +10,18 @@ fn main() {
         process::exit(1);
     });
 
-    // println!("Searching for {}", config.query);
-    // println!("In file {}", config.file_path);
-
     if let Err(e) = ztask::run(config) {
         eprintln!("Application error: {e}");
         process::exit(1);
     }
+
 }
 
+// #[cfg(test)]
+// mod tests {
+//     #[test]
+//     #[ignore]  // Not ready yet
+//     fn invoke_main() {
+//         super::main();
+//     }
+// }

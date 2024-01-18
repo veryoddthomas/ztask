@@ -42,7 +42,6 @@ pub fn run (config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-
 /*
   From rust doc including this example...
   https://doc.rust-lang.org/book/ch12-04-testing-the-librarys-functionality.html
@@ -90,8 +89,37 @@ pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a st
 mod tests {
     use super::*;
 
+    /// Test that expected arguments return an appropriate Config struct
+    #[test]
+    fn config_1() {
+        let test_args = vec!["ztask".to_string(), "Who".to_string(), "poem.txt".to_string()];
+        let config = Config::build(&test_args).unwrap();
+
+        assert_eq!(config.query, "Who".to_string());
+        assert_eq!(config.file_path, "poem.txt".to_string());
+    }
+
+    /// Test that invalid arguments return an error
+    #[test]
+    #[should_panic]
+    fn invalid_args() {
+        let test_args = vec!["ztask".to_string()];
+        Config::build(&test_args).unwrap();
+    }
+
+    /// Test that the case-sensitive query is found in the contents
     #[test]
     fn case_sensitive() {
+        // contstraint: This test depends on the contents of poem.txt!
+        let test_args = vec!["ztask".to_string(), "Who".to_string(), "poem.txt".to_string()];
+        let config = Config::build(&test_args).unwrap();
+
+        run(config).unwrap();
+    }
+
+    /// Test that the case-sensitive query is found in the contents
+    #[test]
+    fn case_sensitive_low_level() {
         let query = "duct";
         let contents = "\
 Rust:
@@ -100,6 +128,8 @@ Pick three.";
 
         assert_eq!(vec!["safe, fast, productive."], search(query, contents));
     }
+
+    /// Test that the case-insensitive query is found in the contents
     #[test]
     fn case_insensitive() {
         let query = "rUsT";
