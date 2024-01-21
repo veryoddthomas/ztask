@@ -4,23 +4,10 @@ use std::fs::File;
 use std::io::Write;
 use std::fs;
 use std::io;
-use thiserror::Error;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 const DB_PATH: &str = "./data/db.json";
-
-// ref: https://docs.rs/thiserror/latest/thiserror/
-
-//TODO: messages used below don't seem to be working as expected
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("error reading the Task DB file: {0}")]
-    ReadTaskDBError(#[from] io::Error),
-
-    #[error("error parsing the Task DB file: {0}")]
-    ParseTaskDBError(#[from] serde_json::Error),
-}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
@@ -70,14 +57,14 @@ impl TaskList {
         }
     }
 
-    pub fn save(&self) -> Result<(), Error> {
+    pub fn save(&self) -> Result<(), io::Error> {
         let serialized = serde_json::to_string_pretty(&self.tasks)?;
         let mut file = File::create(DB_PATH)?;
         file.write_all(serialized.as_bytes())?;
         Ok(())
     }
 
-    pub fn load() -> Result<TaskList, Error> {
+    pub fn load() -> Result<TaskList, io::Error> {
         let contents = fs::read_to_string(DB_PATH)?;
         let tasks: Vec<Task> = serde_json::from_str(&contents)?;
         Ok(TaskList::new_with_tasks(tasks))
