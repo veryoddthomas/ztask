@@ -30,6 +30,7 @@ impl Task {
 
 pub struct TaskList {
     pub tasks: Vec<Task>,
+    pub db_file: String,
 }
 
 impl Drop for TaskList {
@@ -42,13 +43,9 @@ impl Drop for TaskList {
 
 impl TaskList {
     pub fn new() -> Self {
-        TaskList::load().unwrap()
-    }
-
-    /// Create new task list with given tasks.
-    /// WARNING: This will overwrite the existing tasks in the DB file.
-    pub fn new_with_tasks(tasks: Vec<Task>) -> Self {
-        TaskList { tasks }
+        let db_file = DB_PATH.to_string();
+        let tasks = TaskList::load().unwrap();
+        TaskList { tasks: tasks, db_file: db_file }
     }
 
     pub fn print_list(&self) {
@@ -64,24 +61,11 @@ impl TaskList {
         Ok(())
     }
 
-    pub fn load() -> Result<TaskList, io::Error> {
+    pub fn load() -> Result<Vec<Task>, io::Error> {
         let contents = fs::read_to_string(DB_PATH)?;
         let tasks: Vec<Task> = serde_json::from_str(&contents)?;
-        Ok(TaskList::new_with_tasks(tasks))
+        Ok(tasks)
     }
-
-    // pub fn save(&self) -> Result<(), Error> {
-    //     let serialized = serde_json::to_string_pretty(&self.tasks)?;
-    //     let mut file = File::create(DB_PATH)?;
-    //     file.write_all(serialized.as_bytes())?;
-    //     Ok(())
-    // }
-
-    // pub fn load() -> Result<TaskList, Error> {
-    //     let contents = fs::read_to_string(DB_PATH)?;
-    //     let tasks: Vec<Task> = serde_json::from_str(&contents)?;
-    //     Ok(TaskList::new_with_tasks(tasks))
-    // }
 
     pub fn add_task(&mut self, task: Task) {
         self.tasks.push(task)

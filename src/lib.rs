@@ -42,23 +42,7 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
         println!("{line}");
     }
 
-
-    // Load the database, print it, and then write it back.
-    // Note: write back will restrict to known data structure
-    // for Task, and remove other fields.
-    // let tasks = task::read_db().expect("fetch task list");
-
-    // let mut tasks = task::read_db().expect("fetch task list");
-    // for t in &tasks {
-    //     println!("{name}", name = t.name);
-    // }
-    // let new_task = task::Task::new("Write Rust code".to_string(), "work".to_string());
-    // tasks.push(new_task);
-    // task::write_db(&tasks);
-    // task::TaskList::new_with_tasks(tasks).print_list();
-
     let mut task_list = task::TaskList::new();
-    task_list.print_list();
 
     let new_task = task::Task::new("New task".to_string(), "".to_string());
     task_list.add_task(new_task);
