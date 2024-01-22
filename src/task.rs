@@ -7,7 +7,7 @@ use std::io;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-const DB_PATH: &str = "./data/db.json";
+// const DB_PATH: &str = "./data/db.json";
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
@@ -17,20 +17,20 @@ pub struct Task {
     pub created_at: DateTime<Utc>,
 }
 
-impl Task {
-    pub fn new(name: String, category: String) -> Self {
-        Task {
-            id: Uuid::new_v4(),
-            name,
-            category,
-            created_at: Utc::now(),
-        }
-    }
-}
+// impl Task {
+//     pub fn new(name: String, category: String) -> Self {
+//         Task {
+//             id: Uuid::new_v4(),
+//             name,
+//             category,
+//             created_at: Utc::now(),
+//         }
+//     }
+// }
 
 pub struct TaskList {
     pub tasks: Vec<Task>,
-    pub db_file: String,
+    pub db_path: String,
 }
 
 impl Drop for TaskList {
@@ -42,10 +42,10 @@ impl Drop for TaskList {
 }
 
 impl TaskList {
-    pub fn new() -> Self {
-        let db_file = DB_PATH.to_string();
-        let tasks = TaskList::load().unwrap();
-        TaskList { tasks: tasks, db_file: db_file }
+    pub fn new(db_path: String) -> Self {
+        // let db_file = DB_PATH.to_string();
+        let tasks = TaskList::load(db_path.clone()).unwrap();
+        TaskList { tasks: tasks, db_path: db_path }
     }
 
     pub fn print_list(&self) {
@@ -56,20 +56,20 @@ impl TaskList {
 
     pub fn save(&self) -> Result<(), io::Error> {
         let serialized = serde_json::to_string_pretty(&self.tasks)?;
-        let mut file = File::create(DB_PATH)?;
+        let mut file = File::create(&self.db_path)?;
         file.write_all(serialized.as_bytes())?;
         Ok(())
     }
 
-    pub fn load() -> Result<Vec<Task>, io::Error> {
-        let contents = fs::read_to_string(DB_PATH)?;
+    pub fn load(db_path: String) -> Result<Vec<Task>, io::Error> {
+        let contents = fs::read_to_string(&db_path)?;
         let tasks: Vec<Task> = serde_json::from_str(&contents)?;
         Ok(tasks)
     }
 
-    pub fn add_task(&mut self, task: Task) {
-        self.tasks.push(task)
-    }
+    // pub fn add_task(&mut self, task: Task) {
+    //     self.tasks.push(task)
+    // }
 
     // pub fn remove_task(&mut self, id: Uuid) {
     //     self.tasks.retain(|task| task.id!= id)
