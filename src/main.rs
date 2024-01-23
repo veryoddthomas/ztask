@@ -12,11 +12,11 @@ fn main() {
 
 }
 
-// #[cfg(test)]
-// mod tests {
-//     #[test]
-//     #[ignore]  // Not ready yet
-//     fn invoke_main() {
-//         super::main();
-//     }
-// }
+#[cfg(test)]
+mod tests {
+    #[test]
+    // #[ignore]  // Not ready yet
+    fn invoke_main() {
+        super::main();
+    }
+}

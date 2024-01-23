@@ -14,8 +14,8 @@ cargo install cargo-tarpaulin
 ## Run tests and measure coverage
 
 ```bash
-cargo tarpaulin
-cargo tarpaulin --out Html && wslview tarpaulin-report.html
+cargo tarpaulin --implicit-test-threads
+cargo tarpaulin --implicit-test-threads --out Html && wslview tarpaulin-report.html
 ```
 
 
