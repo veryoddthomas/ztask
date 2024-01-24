@@ -28,10 +28,13 @@ struct Arguments {
 
 pub fn run() -> Result<(), Box<dyn Error>> {
     let args: Arguments = Arguments::parse();
-    println!("{:?}", args);
+
+    // Print arguments for debugging
+    // println!("{:?}", args);
 
     let mut task_list = task::TaskList::new(args.db);
 
+    // Check if user requested to add new tasks
     if let Some(new_task_names) = args.add {
         if new_task_names.len() > 0 {
             for name in new_task_names {
@@ -43,10 +46,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             let new_task = task::Task::new(default_task_name, "".to_string());
             task_list.add_task(new_task);
         }
-    } else {
-        println!("No tasks to add");
     }
 
+    // Check if user requested to list tasks
     if args.list {
         task_list.print_list();
     }
