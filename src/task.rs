@@ -1,15 +1,10 @@
-// use chrono::prelude::*;
 use chrono::{DateTime, Local};
-use serde;
-use serde_json;
 use std::fs::File;
 use std::io::Write;
 use std::fs;
 use std::io;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
-
-// const DB_PATH: &str = "./data/db.json";
 
 /// Task structure
 #[derive(Serialize, Deserialize, Clone)]
@@ -48,7 +43,7 @@ impl TaskList {
     pub fn new(db_path: String) -> Self {
         // let db_file = DB_PATH.to_string();
         let tasks = TaskList::load(db_path.clone()).unwrap();
-        TaskList { tasks: tasks, db_path: db_path }
+        TaskList { tasks, db_path }
     }
 
     pub fn print_list(&self) {
@@ -58,7 +53,7 @@ impl TaskList {
     }
 
     pub fn num_tasks(&self) -> usize {
-        return self.tasks.len()
+        self.tasks.len()
     }
 
     pub fn save(&self) -> Result<(), io::Error> {
@@ -69,7 +64,7 @@ impl TaskList {
     }
 
     pub fn load(db_path: String) -> Result<Vec<Task>, io::Error> {
-        let contents = fs::read_to_string(&db_path)?;
+        let contents = fs::read_to_string(db_path)?;
         let tasks: Vec<Task> = serde_json::from_str(&contents)?;
         Ok(tasks)
     }

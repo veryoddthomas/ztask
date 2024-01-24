@@ -38,32 +38,38 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
     let mut task_list = task::TaskList::new(args.db);
 
-    // Check if user requested to add new tasks
+    // Check if user requested to add new tasks with --add
     if let Some(new_task_names) = args.add {
-        if new_task_names.len() > 0 {
+        if new_task_names.is_empty() {
+            // --add was provided without name(s)
+            // Create default task with default name
+            let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
+            let new_task = task::Task::new(default_task_name, "".to_string());
+            task_list.add_task(new_task);
+        } else {
+            // --add was provided with name(s)
+            // Create new tasks with those names
             for name in new_task_names {
                 let new_task = task::Task::new(name, "quick".to_string());
                 task_list.add_task(new_task);
             }
-        } else {
-            let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
-            let new_task = task::Task::new(default_task_name, "".to_string());
-            task_list.add_task(new_task);
         }
     }
 
-    // Check if user requested to delete any tasks
+    // Check if user requested to delete any tasks with --del
     if let Some(task_ids) = args.del {
-        if task_ids.len() > 0 {
+        if task_ids.is_empty() {
+            // --del was provided without id(s)
+            // Remove last task
+            let final_length = task_list.tasks.len().saturating_sub(1);  // remove last task
+            task_list.tasks.truncate(final_length);
+        } else {
+            // --del was provided with id(s)
             // Remove selected tasks
             for id in task_ids {
                 let uuid = uuid::Uuid::parse_str(&id).unwrap();
                 task_list.remove_task(uuid);
             }
-        } else {
-            // Remove last task
-            let final_length = task_list.tasks.len().saturating_sub(1);  // remove last task
-            task_list.tasks.truncate(final_length);
         }
     }
 
@@ -74,6 +80,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+
 
 // #[cfg(test)]
 // mod tests {
