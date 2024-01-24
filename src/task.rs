@@ -5,6 +5,7 @@ use std::fs;
 use std::io;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use colored::Colorize;
 
 /// Task structure
 #[derive(Serialize, Deserialize, Clone)]
@@ -24,6 +25,17 @@ impl Task {
             created_at: Local::now(),
         }
     }
+    pub fn to_string(&self, colorized: bool) -> String {
+        let task_id = self.id.simple().to_string();
+        let id=&task_id[0..9];
+        // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
+        if colorized {
+            // format!("{}  {}  {}", id.bright_green(), self.name, self.category.truecolor(249, 241, 165))
+            format!("{}  {}  {}", id.bright_green(), self.name, self.category.yellow())
+        } else {
+            format!("{}  {}  {}", id, self.name, self.category)
+        }
+    }
 }
 
 pub struct TaskList {
@@ -33,7 +45,6 @@ pub struct TaskList {
 
 impl Drop for TaskList {
     fn drop(&mut self) {
-        // println!("Destroy TaskList");
         self.save().unwrap();
         self.tasks.clear();
     }
@@ -48,7 +59,7 @@ impl TaskList {
 
     pub fn print_list(&self) {
         for task in &self.tasks {
-            println!("Task:  {}  {}  {}", task.id, task.created_at, task.name);
+            println!("{}", task.to_string(true));
         }
     }
 

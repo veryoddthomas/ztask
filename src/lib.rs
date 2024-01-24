@@ -13,11 +13,11 @@ struct Arguments {
     #[clap(long, default_value = DB_PATH)]
     db: String,
 
-    /// Add new Task
+    /// Add one or more new tasks
     #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     add: Option<Vec<String>>,
 
-    /// Delete one or more Tasks
+    /// Delete one or more tasks
     #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     del: Option<Vec<String>>,
 
@@ -44,7 +44,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             // --add was provided without name(s)
             // Create default task with default name
             let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
-            let new_task = task::Task::new(default_task_name, "".to_string());
+            let new_task = task::Task::new(default_task_name, "quick".to_string());
             task_list.add_task(new_task);
         } else {
             // --add was provided with name(s)
