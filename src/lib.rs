@@ -15,12 +15,16 @@ struct Arguments {
     // db: Option<String>,
     db: String,
 
+    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
+    /// Add new Task
+    add: Option<Vec<String>>,
+
     #[clap(short, long, action=ArgAction::SetTrue )]
     /// Add a task to the list
     list: bool,
 
-    /// Increase logging verbosity
     #[clap(short, long, action=ArgAction::Count)]
+    /// Increase logging verbosity
     verbose: u8,
 }
 
@@ -28,17 +32,26 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     let args: Arguments = Arguments::parse();
     println!("{:?}", args);
 
-    let task_list = task::TaskList::new(args.db);
+    let mut task_list = task::TaskList::new(args.db);
 
-    // let new_task = task::Task::new("New task".to_string(), "".to_string());
-    // task_list.add_task(new_task);
-    task_list.print_list();
+    if let Some(new_task_names) = args.add {
+        if new_task_names.len() > 0 {
+            for name in new_task_names {
+                let new_task = task::Task::new(name, "quick".to_string());
+                task_list.add_task(new_task);
+            }
+        } else {
+            let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
+            let new_task = task::Task::new(default_task_name, "".to_string());
+            task_list.add_task(new_task);
+        }
+    } else {
+        println!("No tasks to add");
+    }
 
-    // match &args.add.unwrap() {
-    //     Ok(c) => println!("{} uses found", c),
-    //     Err(e) => eprintln!("error in processing : {}", e),
-    // }
-
+    if args.list {
+        task_list.print_list();
+    }
 
     Ok(())
 }

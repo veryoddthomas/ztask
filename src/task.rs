@@ -1,4 +1,6 @@
-use chrono::prelude::*;
+// use chrono::prelude::*;
+use chrono::{DateTime, Local};
+use serde;
 use serde_json;
 use std::fs::File;
 use std::io::Write;
@@ -14,19 +16,19 @@ pub struct Task {
     pub id: Uuid,
     pub name: String,
     pub category: String,
-    pub created_at: DateTime<Utc>,
+    pub created_at: DateTime<Local>,
 }
 
-// impl Task {
-//     pub fn new(name: String, category: String) -> Self {
-//         Task {
-//             id: Uuid::new_v4(),
-//             name,
-//             category,
-//             created_at: Utc::now(),
-//         }
-//     }
-// }
+impl Task {
+    pub fn new(name: String, category: String) -> Self {
+        Task {
+            id: Uuid::new_v4(),
+            name,
+            category,
+            created_at: Local::now(),
+        }
+    }
+}
 
 pub struct TaskList {
     pub tasks: Vec<Task>,
@@ -50,8 +52,12 @@ impl TaskList {
 
     pub fn print_list(&self) {
         for task in &self.tasks {
-            println!("Task: {} {}", task.id, task.name);
+            println!("Task:  {}  {}  {}", task.id, task.created_at, task.name);
         }
+    }
+
+    pub fn num_tasks(&self) -> usize {
+        return self.tasks.len()
     }
 
     pub fn save(&self) -> Result<(), io::Error> {
@@ -67,9 +73,9 @@ impl TaskList {
         Ok(tasks)
     }
 
-    // pub fn add_task(&mut self, task: Task) {
-    //     self.tasks.push(task)
-    // }
+    pub fn add_task(&mut self, task: Task) {
+        self.tasks.push(task)
+    }
 
     // pub fn remove_task(&mut self, id: Uuid) {
     //     self.tasks.retain(|task| task.id!= id)
@@ -206,21 +212,6 @@ impl TaskList {
     // }
 }
 
-
-
-// pub fn read_db() -> Result<Vec<Task>, Error> {
-//     let db_content = fs::read_to_string(DB_PATH)?;
-//     let parsed: Vec<Task> = serde_json::from_str(&db_content)?;
-//     Ok(parsed)
-// }
-
-// /// Write tasks to DB (json file)
-// pub fn write_db(tasks: &Vec<Task>) {
-//     let json = serde_json::to_string(tasks).unwrap();
-
-//     let mut file = File::create(DB_PATH).unwrap();
-//     file.write_all(json.as_bytes()).unwrap();
-// }
 
 // xref: /usr/local/develop/rust-commandline-example/src/main.rs
 
