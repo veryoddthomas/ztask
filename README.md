@@ -23,6 +23,20 @@ cargo tarpaulin --implicit-test-threads --out Html && wslview tarpaulin-report.h
 IGNORE_CASE=TRUE cargo run -q -- "who"  poem.txt
 ```
 
+## Documentation
+
+### Public
+
+```bash
+cargo doc --no-deps --open
+```
+
+### Private
+
+```bash
+cargo doc --document-private-items --no-deps --open
+```
+
 # To Do
 
 - Investigate https://docs.rs/mockall/latest/mockall/

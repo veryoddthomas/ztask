@@ -1,30 +1,28 @@
 use clap::{Parser, ArgAction};
 use std::error::Error;
-// use std::fs;
-// use std::env;
 mod task;
 
+/// Default database path
 const DB_PATH: &str = "./data/db.json";
 
 #[derive(Parser,Default,Debug)]
 #[clap(name="ZTask", author="Tom Zakrajsek", version, about)]
 /// A very simple Task Manager
 struct Arguments {
-    #[clap(short, long, default_value = DB_PATH)]
     /// Database file of tasks
-    // db: Option<String>,
+    #[clap(short, long, default_value = DB_PATH)]
     db: String,
 
-    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     /// Add new Task
+    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     add: Option<Vec<String>>,
 
+    /// List all tasks
     #[clap(short, long, action=ArgAction::SetTrue )]
-    /// Add a task to the list
     list: bool,
 
-    #[clap(short, long, action=ArgAction::Count)]
     /// Increase logging verbosity
+    #[clap(short, long, action=ArgAction::Count)]
     verbose: u8,
 }
 

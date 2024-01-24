@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 // const DB_PATH: &str = "./data/db.json";
 
+/// Task structure
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
     pub id: Uuid,
