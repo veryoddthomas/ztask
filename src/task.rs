@@ -78,9 +78,9 @@ impl TaskList {
         self.tasks.push(task)
     }
 
-    // pub fn remove_task(&mut self, id: Uuid) {
-    //     self.tasks.retain(|task| task.id!= id)
-    // }
+    pub fn remove_task(&mut self, id: Uuid) {
+        self.tasks.retain(|task| task.id!= id)
+    }
 
     // pub fn get_task(&self, id: Uuid) -> Option<&Task> {
     //     self.tasks.iter().find(|task| task.id == id)

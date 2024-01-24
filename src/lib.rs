@@ -10,12 +10,16 @@ const DB_PATH: &str = "./data/db.json";
 /// A very simple Task Manager
 struct Arguments {
     /// Database file of tasks
-    #[clap(short, long, default_value = DB_PATH)]
+    #[clap(long, default_value = DB_PATH)]
     db: String,
 
     /// Add new Task
     #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     add: Option<Vec<String>>,
+
+    /// Delete one or more Tasks
+    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
+    del: Option<Vec<String>>,
 
     /// List all tasks
     #[clap(short, long, action=ArgAction::SetTrue )]
@@ -45,6 +49,21 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
             let new_task = task::Task::new(default_task_name, "".to_string());
             task_list.add_task(new_task);
+        }
+    }
+
+    // Check if user requested to delete any tasks
+    if let Some(task_ids) = args.del {
+        if task_ids.len() > 0 {
+            // Remove selected tasks
+            for id in task_ids {
+                let uuid = uuid::Uuid::parse_str(&id).unwrap();
+                task_list.remove_task(uuid);
+            }
+        } else {
+            // Remove last task
+            let final_length = task_list.tasks.len().saturating_sub(1);  // remove last task
+            task_list.tasks.truncate(final_length);
         }
     }
 
