@@ -49,8 +49,28 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         } else {
             // --add was provided with name(s)
             // Create new tasks with those names
-            for name in new_task_names {
-                let new_task = task::Task::new(name, "quick".to_string());
+            if new_task_names.len() > 1 {
+                // --add was provided with multiple task names
+                // If they are all single word, consider this as a single task
+                let count_multi_word = new_task_names.iter().filter(|name| name.contains(" ")).count();
+                if count_multi_word == 0 {
+                    // All task names are single word
+                    // Create single task with those task names
+                    let name = new_task_names.join(" ");
+                    let new_task = task::Task::new(name, "quick".to_string());
+                    task_list.add_task(new_task);
+                } else {
+                    // Some task names are multi-word
+                    // Create multiple tasks with those task names
+                    for name in new_task_names {
+                        let new_task = task::Task::new(name, "quick".to_string());
+                        task_list.add_task(new_task);
+                    }
+                }
+            } else {
+                // --add was provided with single task name
+                // Create single task with that task name
+                let new_task = task::Task::new(new_task_names[0].clone(), "quick".to_string());
                 task_list.add_task(new_task);
             }
         }
