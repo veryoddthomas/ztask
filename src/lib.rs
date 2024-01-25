@@ -67,8 +67,8 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             // --del was provided with id(s)
             // Remove selected tasks
             for id in task_ids {
-                let uuid = uuid::Uuid::parse_str(&id).unwrap();
-                task_list.remove_task(uuid);
+                // let uuid = uuid::Uuid::parse_str(&id).unwrap();
+                task_list.remove_task(id);
             }
         }
     }

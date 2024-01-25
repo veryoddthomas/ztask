@@ -10,7 +10,7 @@ use colored::Colorize;
 /// Task structure
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
-    pub id: Uuid,
+    pub id: String,
     pub name: String,
     pub category: String,
     pub created_at: DateTime<Local>,
@@ -19,18 +19,16 @@ pub struct Task {
 impl Task {
     pub fn new(name: String, category: String) -> Self {
         Task {
-            id: Uuid::new_v4(),
+            id: Uuid::new_v4().simple().to_string(),
             name,
             category,
             created_at: Local::now(),
         }
     }
     pub fn to_string(&self, colorized: bool) -> String {
-        let task_id = self.id.simple().to_string();
-        let id=&task_id[0..9];
+        let id=&self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
         if colorized {
-            // format!("{}  {}  {}", id.bright_green(), self.name, self.category.truecolor(249, 241, 165))
             format!("{}  {}  {}", id.bright_green(), self.name, self.category.yellow())
         } else {
             format!("{}  {}  {}", id, self.name, self.category)
@@ -84,8 +82,15 @@ impl TaskList {
         self.tasks.push(task)
     }
 
-    pub fn remove_task(&mut self, id: Uuid) {
-        self.tasks.retain(|task| task.id!= id)
+    pub fn remove_task(&mut self, id: String) {
+        if id.len() < 4 {
+            // TODO-001
+            // This is for safety of usability.  We could remove this check
+            // if we instead make sure the the prefix only matches one task.
+            println!("Please specify a task id (at least 4 digits) to remove");
+            return;
+        }
+        self.tasks.retain(|task| &task.id[0..id.len()] != id)
     }
 
     // pub fn get_task(&self, id: Uuid) -> Option<&Task> {
