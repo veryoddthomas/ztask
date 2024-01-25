@@ -49,22 +49,26 @@ impl Drop for TaskList {
 }
 
 impl TaskList {
+    /// Create a new task list.
     pub fn new(db_path: String) -> Self {
         // let db_file = DB_PATH.to_string();
         let tasks = TaskList::load(db_path.clone()).unwrap();
         TaskList { tasks, db_path }
     }
 
+    /// Print the task list.
     pub fn print_list(&self) {
         for task in &self.tasks {
             println!("{}", task.to_string(true));
         }
     }
 
+    /// Return the number of tasks in the list.
     pub fn num_tasks(&self) -> usize {
         self.tasks.len()
     }
 
+    /// Save the task list to the database file.
     pub fn save(&self) -> Result<(), io::Error> {
         let serialized = serde_json::to_string_pretty(&self.tasks)?;
         let mut file = File::create(&self.db_path)?;
@@ -72,22 +76,25 @@ impl TaskList {
         Ok(())
     }
 
+    /// Load the task list from the database file.
     pub fn load(db_path: String) -> Result<Vec<Task>, io::Error> {
         let contents = fs::read_to_string(db_path)?;
         let tasks: Vec<Task> = serde_json::from_str(&contents)?;
         Ok(tasks)
     }
 
+    /// Add a task to the list.
     pub fn add_task(&mut self, task: Task) {
         self.tasks.push(task)
     }
 
+    /// Remove the task whose id starts with the id string passed in.
     pub fn remove_task(&mut self, id: String) {
-        if id.len() < 4 {
-            // TODO-001
-            // This is for safety of usability.  We could remove this check
-            // if we instead make sure the the prefix only matches one task.
-            println!("Please specify a task id (at least 4 digits) to remove");
+        // If we don't find exactly one task that starts with 'id',
+        // print a warning and return
+        let match_count = self.tasks.iter().filter(|task| &task.id[0..id.len()] == id).count();
+        if match_count !=1 {
+            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
             return;
         }
         self.tasks.retain(|task| &task.id[0..id.len()] != id)
