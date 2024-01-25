@@ -5,25 +5,39 @@
 - [Coverage](https://doc.rust-lang.org/rustc/instrument-coverage.html)
 
 
-## Test Coverage
 
-### Execute tests
+## Basic Execution
+
+```bash
+cargo run -q -- -v -l
+```
+
+## Test Coverage
 
 ### Install tarpaulin for coverage
 
+Until I deal with this, make sure there is an empty
+database when setting up a new project dir:
+
+data/db.json:
+```json
+[]
+```
+
+
 ```bash
+apt install libssl-dev
 cargo install cargo-tarpaulin
 ```
 
 ### Run tests and measure coverage
 
-```bash
-cargo tarpaulin --implicit-test-threads
-cargo tarpaulin --implicit-test-threads --out Html && wslview tarpaulin-report.html
-```
+Pick one
 
 ```bash
-IGNORE_CASE=TRUE cargo run -q -- "who"  poem.txt
+cargo test
+cargo tarpaulin --implicit-test-threads
+cargo tarpaulin --implicit-test-threads --out Html && wslview tarpaulin-report.html
 ```
 
 ## Checkers
