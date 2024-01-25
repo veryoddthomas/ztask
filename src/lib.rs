@@ -76,6 +76,9 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     // Check if user requested to list tasks
     if args.list {
         task_list.print_list();
+        if args.verbose > 0 {
+            println!("task count: {}", task_list.num_tasks());
+        }
     }
 
     Ok(())
