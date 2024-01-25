@@ -7,6 +7,27 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use colored::Colorize;
 
+// I'm not sure yet if I want to implement
+// a TaskType enum or if that would be
+// too inflexible.
+
+// #[derive(Serialize, Deserialize, Clone)]
+// // #[serde(tag = "type")]
+// pub enum TaskType {
+//     #[serde(rename = "quick")]  Quick,
+//     #[serde(rename = "learning")]   Learning,
+// }
+
+#[derive(Serialize, Deserialize, Clone)]
+// #[serde(tag = "type")]
+pub enum TaskStatus {
+    #[serde(rename = "active")]    Active,
+    #[serde(rename = "backlog")]   Backlog,
+    #[serde(rename = "blocked")]   Blocked,
+    #[serde(rename = "completed")] Completed,
+    #[serde(rename = "sleeping")]  Sleeping,  // Would Snoozed be better?
+}
+
 /// Task structure
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
@@ -14,6 +35,7 @@ pub struct Task {
     pub name: String,
     pub category: String,
     pub created_at: DateTime<Local>,
+    pub status: TaskStatus,
 }
 
 impl Task {
@@ -23,6 +45,7 @@ impl Task {
             name,
             category,
             created_at: Local::now(),
+            status: TaskStatus::Active,
         }
     }
     pub fn to_string(&self, colorized: bool) -> String {
