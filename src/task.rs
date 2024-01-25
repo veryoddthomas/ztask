@@ -6,6 +6,8 @@ use std::io;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use colored::Colorize;
+use std::collections::VecDeque;
+
 
 // I'm not sure yet if I want to implement
 // a TaskType enum or if that would be
@@ -18,7 +20,7 @@ use colored::Colorize;
 //     #[serde(rename = "learning")]   Learning,
 // }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 // #[serde(tag = "type")]
 pub enum TaskStatus {
     #[serde(rename = "active")]    Active,
@@ -52,15 +54,15 @@ impl Task {
         let id=&self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
         if colorized {
-            format!("{}  {}  {}", id.bright_green(), self.name, self.category.yellow())
+            format!("{}  {}  {}", id.bright_green(), self.name, format!("{:?}",self.status).yellow())
         } else {
-            format!("{}  {}  {}", id, self.name, self.category)
+            format!("{}  {}  {}", id, self.name, format!("{:?}",self.status))
         }
     }
 }
 
 pub struct TaskList {
-    pub tasks: Vec<Task>,
+    pub tasks: VecDeque<Task>,
     pub db_path: String,
 }
 
@@ -100,15 +102,15 @@ impl TaskList {
     }
 
     /// Load the task list from the database file.
-    pub fn load(db_path: String) -> Result<Vec<Task>, io::Error> {
+    pub fn load(db_path: String) -> Result<VecDeque<Task>, io::Error> {
         let contents = fs::read_to_string(db_path)?;
-        let tasks: Vec<Task> = serde_json::from_str(&contents)?;
+        let tasks: VecDeque<Task> = serde_json::from_str(&contents)?;
         Ok(tasks)
     }
 
     /// Add a task to the list.
     pub fn add_task(&mut self, task: Task) {
-        self.tasks.push(task)
+        self.tasks.push_back(task)
     }
 
     /// Remove the task whose id starts with the id string passed in.
@@ -127,22 +129,22 @@ impl TaskList {
     //     self.tasks.iter().find(|task| task.id == id)
     // }
 
-    // pub fn get_tasks_by_category(&self, category: &str) -> Vec<&Task> {
+    // pub fn get_tasks_by_category(&self, category: &str) -> VecDeque<&Task> {
     //     self.tasks.iter().filter(|task| task.category == category).collect()
     // }
 
-    // pub fn get_tasks_by_name(&self, name: &str) -> Vec<&Task> {
+    // pub fn get_tasks_by_name(&self, name: &str) -> VecDeque<&Task> {
     //     self.tasks.iter().filter(|task| task.name == name).collect()
     // }
 
-    // pub fn get_tasks_by_name_and_category(&self, name: &str, category: &str) -> Vec<&Task> {
+    // pub fn get_tasks_by_name_and_category(&self, name: &str, category: &str) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.category == category)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_category_and_name(&self, name: &str, category: &str) -> Vec<&Task> {
+    // pub fn get_tasks_by_category_and_name(&self, name: &str, category: &str) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.category == category)
@@ -154,7 +156,7 @@ impl TaskList {
     //     name: &str,
     //     category: &str,
     //     date: &DateTime<Utc>,
-    // ) -> Vec<&Task> {
+    // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.category == category && task.created_at == date)
@@ -166,28 +168,28 @@ impl TaskList {
     //     name: &str,
     //     category: &str,
     //     date: &DateTime<Utc>,
-    // ) -> Vec<&Task> {
+    // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.category == category && task.created_at == date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_name_and_date(&self, name: &str, date: &DateTime<Utc>) -> Vec<&Task> {
+    // pub fn get_tasks_by_name_and_date(&self, name: &str, date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.created_at == date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_category_and_date(&self, category: &str, date: &DateTime<Utc>) -> Vec<&Task> {
+    // pub fn get_tasks_by_category_and_date(&self, category: &str, date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.category == category && task.created_at == date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_date(&self, date: &DateTime<Utc>) -> Vec<&Task> {
+    // pub fn get_tasks_by_date(&self, date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks.iter().filter(|task| task.created_at == date).collect()
     // }
 
@@ -197,7 +199,7 @@ impl TaskList {
     //     category: &str,
     //     start_date: &DateTime<Utc>,
     //     end_date: &DateTime<Utc>,
-    // ) -> Vec<&Task> {
+    // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
@@ -210,28 +212,28 @@ impl TaskList {
     //     category: &str,
     //     start_date: &DateTime<Utc>,
     //     end_date: &DateTime<Utc>,
-    // ) -> Vec<&Task> {
+    // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_name_and_date_range(&self, name: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> Vec<&Task> {
+    // pub fn get_tasks_by_name_and_date_range(&self, name: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.created_at >= start_date && task.created_at <= end_date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_category_and_date_range(&self, category: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> Vec<&Task> {
+    // pub fn get_tasks_by_category_and_date_range(&self, category: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.category == category && task.created_at >= start_date && task.created_at <= end_date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_date_range(&self, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> Vec<&Task> {
+    // pub fn get_tasks_by_date_range(&self, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.created_at >= start_date && task.created_at <= end_date)
@@ -246,7 +248,7 @@ impl TaskList {
     //     end_date: &DateTime<Utc>,
     //     start_time: &DateTime<Utc>,
     //     end_time: &DateTime<Utc>,
-    // ) -> Vec<&Task> {
+    // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
     //        .filter(|task| task.name == name && task.category == category && task.created_at >= start_date && task.created_at <= end_date && task.created_at >= start_time && task.created_at <= end_time)
