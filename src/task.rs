@@ -76,9 +76,14 @@ impl Drop for TaskList {
 impl TaskList {
     /// Create a new task list.
     pub fn new(db_path: String) -> Self {
-        // let db_file = DB_PATH.to_string();
-        let tasks = TaskList::load(db_path.clone()).unwrap();
-        TaskList { tasks, db_path }
+        let result = TaskList::load(db_path.clone());
+
+        match result {
+            Ok(tasks) => TaskList { tasks, db_path },
+            Err(_) => {
+                TaskList { tasks: VecDeque::new(), db_path }
+            }
+        }
     }
 
     /// Print the task list.
