@@ -20,7 +20,7 @@ use std::collections::VecDeque;
 //     #[serde(rename = "learning")]   Learning,
 // }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 // #[serde(tag = "type")]
 pub enum TaskStatus {
     #[serde(rename = "active")]    Active,
@@ -270,3 +270,19 @@ impl TaskList {
 
 // xref: /usr/local/develop/rust-commandline-example/src/main.rs
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Verify default task settings
+    #[test]
+    fn check_task_defaults() {
+        let task = Task::new("Get shit done".to_string(), "Category".to_string());
+
+        assert_eq!(task.name, "Get stuff done".to_string());
+        assert_eq!(task.category, "Category".to_string());
+        assert_eq!(task.status, TaskStatus::Active);
+        assert_eq!(task.id.len(), 32);
+    }
+
+}
