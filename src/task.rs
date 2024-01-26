@@ -98,6 +98,12 @@ impl TaskList {
         self.tasks.len()
     }
 
+    // #[cfg(test)]
+    // /// Clears the TaskList, removing all Tasks.
+    // pub fn clear(&mut self) {
+    //     self.tasks.clear()
+    // }
+
     /// Save the task list to the database file.
     pub fn save(&self) -> Result<(), io::Error> {
         let serialized = serde_json::to_string_pretty(&self.tasks)?;
