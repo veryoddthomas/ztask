@@ -32,12 +32,13 @@ cargo install cargo-tarpaulin
 
 ### Run tests and measure coverage
 
-Pick one
+Pick one.  I've seen a few times that I had to `cargo build` explicitly
+before `cargo test` or `cargo tarpaulin` will work.
 
 ```bash
 cargo test
-cargo tarpaulin --implicit-test-threads
-cargo tarpaulin --implicit-test-threads --out Html && wslview tarpaulin-report.html
+cargo tarpaulin --implicit-test-threads --command Build
+cargo tarpaulin --implicit-test-threads --command Build --out Html && wslview tarpaulin-report.html
 ```
 
 ## Checkers
