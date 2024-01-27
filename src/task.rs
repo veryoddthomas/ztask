@@ -277,7 +277,7 @@ mod tests {
     /// Verify default task settings
     #[test]
     fn check_task_defaults() {
-        let task = Task::new("Get shit done".to_string(), "Category".to_string());
+        let task = Task::new("Get stuff done".to_string(), "Category".to_string());
 
         assert_eq!(task.name, "Get stuff done".to_string());
         assert_eq!(task.category, "Category".to_string());
