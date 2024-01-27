@@ -21,6 +21,10 @@ struct Arguments {
     #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     del: Option<Vec<String>>,
 
+    /// Edit one or more tasks
+    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
+    edit: Option<Vec<String>>,
+
     /// List all tasks
     #[clap(short, long, action=ArgAction::SetTrue )]
     list: bool,
@@ -76,6 +80,20 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         }
     }
 
+    // Check if user requested to edit any tasks with --edit
+    if let Some(task_ids) = args.edit {
+        if task_ids.is_empty() {
+            // --edit was provided without id(s)
+            println!("--edit arg list is empty, which is not allowed")
+        } else {
+            // --edit was provided with id(s)
+            // Edit selected tasks
+            for id in task_ids {
+                task_list.edit_task(id);
+            }
+        }
+    }
+
     // Check if user requested to delete any tasks with --del
     if let Some(task_ids) = args.del {
         if task_ids.is_empty() {
@@ -87,7 +105,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             // --del was provided with id(s)
             // Remove selected tasks
             for id in task_ids {
-                // let uuid = uuid::Uuid::parse_str(&id).unwrap();
                 task_list.remove_task(id);
             }
         }

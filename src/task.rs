@@ -34,17 +34,17 @@ pub enum TaskStatus {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Task {
     pub id: String,
-    pub name: String,
+    pub summary: String,
     pub category: String,
     pub created_at: DateTime<Local>,
     pub status: TaskStatus,
 }
 
 impl Task {
-    pub fn new(name: String, category: String) -> Self {
+    pub fn new(summary: String, category: String) -> Self {
         Task {
             id: Uuid::new_v4().simple().to_string(),
-            name,
+            summary,
             category,
             created_at: Local::now(),
             status: TaskStatus::Active,
@@ -54,9 +54,9 @@ impl Task {
         let id=&self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
         if colorized {
-            format!("{}  {}  {}", id.bright_green(), self.name, format!("{:?}",self.status).yellow())
+            format!("{}  {}  {}", id.bright_green(), self.summary, format!("{:?}",self.status).yellow())
         } else {
-            format!("{}  {}  {}", id, self.name, format!("{:?}",self.status))
+            format!("{}  {}  {}", id, self.summary, format!("{:?}",self.status))
         }
     }
 }
@@ -136,7 +136,25 @@ impl TaskList {
         self.tasks.retain(|task| &task.id[0..id.len()] != id)
     }
 
-    // pub fn get_task(&self, id: Uuid) -> Option<&Task> {
+    /// Edit the task whose id starts with the id string passed in.
+    pub fn edit_task(&mut self, id: String) {
+        let tasks = self.tasks.iter().filter(|task| &task.id[0..id.len()] == id);
+        let match_count = tasks.count();
+        if match_count !=1 {
+            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+            return;
+        }
+
+        let result = self.tasks.iter().find(|task| &task.id[0..id.len()] == id);
+        if let Some(task) = result {
+            println!("TBD: implement edit for {}", task.to_string(true));
+        } else {
+            println!("Task {id} not found")
+        }
+    }
+
+
+    // pub fn get_task(&self, id: String) -> Option<&Task> {
     //     self.tasks.iter().find(|task| task.id == id)
     // }
 
@@ -144,52 +162,52 @@ impl TaskList {
     //     self.tasks.iter().filter(|task| task.category == category).collect()
     // }
 
-    // pub fn get_tasks_by_name(&self, name: &str) -> VecDeque<&Task> {
-    //     self.tasks.iter().filter(|task| task.name == name).collect()
+    // pub fn get_tasks_by_summary(&self, summary: &str) -> VecDeque<&Task> {
+    //     self.tasks.iter().filter(|task| task.summary == summary).collect()
     // }
 
-    // pub fn get_tasks_by_name_and_category(&self, name: &str, category: &str) -> VecDeque<&Task> {
+    // pub fn get_tasks_by_summary_and_category(&self, summary: &str, category: &str) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.category == category)
+    //        .filter(|task| task.summary == summary && task.category == category)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_category_and_name(&self, name: &str, category: &str) -> VecDeque<&Task> {
+    // pub fn get_tasks_by_category_and_summary(&self, summary: &str, category: &str) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.category == category)
+    //        .filter(|task| task.summary == summary && task.category == category)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_name_and_category_and_date(
+    // pub fn get_tasks_by_summary_and_category_and_date(
     //     &self,
-    //     name: &str,
+    //     summary: &str,
     //     category: &str,
     //     date: &DateTime<Utc>,
     // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.category == category && task.created_at == date)
+    //        .filter(|task| task.summary == summary && task.category == category && task.created_at == date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_category_and_name_and_date(
+    // pub fn get_tasks_by_category_and_summary_and_date(
     //     &self,
-    //     name: &str,
+    //     summary: &str,
     //     category: &str,
     //     date: &DateTime<Utc>,
     // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.category == category && task.created_at == date)
+    //        .filter(|task| task.summary == summary && task.category == category && task.created_at == date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_name_and_date(&self, name: &str, date: &DateTime<Utc>) -> VecDeque<&Task> {
+    // pub fn get_tasks_by_summary_and_date(&self, summary: &str, date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.created_at == date)
+    //        .filter(|task| task.summary == summary && task.created_at == date)
     //        .collect()
     // }
 
@@ -204,36 +222,36 @@ impl TaskList {
     //     self.tasks.iter().filter(|task| task.created_at == date).collect()
     // }
 
-    // pub fn get_tasks_by_name_and_category_and_date_range(
+    // pub fn get_tasks_by_summary_and_category_and_date_range(
     //     &self,
-    //     name: &str,
+    //     summary: &str,
     //     category: &str,
     //     start_date: &DateTime<Utc>,
     //     end_date: &DateTime<Utc>,
     // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
+    //        .filter(|task| task.summary == summary && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_category_and_name_and_date_range(
+    // pub fn get_tasks_by_category_and_summary_and_date_range(
     //     &self,
-    //     name: &str,
+    //     summary: &str,
     //     category: &str,
     //     start_date: &DateTime<Utc>,
     //     end_date: &DateTime<Utc>,
     // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
+    //        .filter(|task| task.summary == summary && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_name_and_date_range(&self, name: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> VecDeque<&Task> {
+    // pub fn get_tasks_by_summary_and_date_range(&self, summary: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.created_at >= start_date && task.created_at <= end_date)
+    //        .filter(|task| task.summary == summary && task.created_at >= start_date && task.created_at <= end_date)
     //        .collect()
     // }
 
@@ -251,9 +269,9 @@ impl TaskList {
     //        .collect()
     // }
 
-    // pub fn get_tasks_by_name_and_category_and_date_range_and_time_range(
+    // pub fn get_tasks_by_summary_and_category_and_date_range_and_time_range(
     //     &self,
-    //     name: &str,
+    //     summary: &str,
     //     category: &str,
     //     start_date: &DateTime<Utc>,
     //     end_date: &DateTime<Utc>,
@@ -262,7 +280,7 @@ impl TaskList {
     // ) -> VecDeque<&Task> {
     //     self.tasks
     //        .iter()
-    //        .filter(|task| task.name == name && task.category == category && task.created_at >= start_date && task.created_at <= end_date && task.created_at >= start_time && task.created_at <= end_time)
+    //        .filter(|task| task.summary == summary && task.category == category && task.created_at >= start_date && task.created_at <= end_date && task.created_at >= start_time && task.created_at <= end_time)
     //        .collect()
     // }
 }
@@ -279,7 +297,7 @@ mod tests {
     fn check_task_defaults() {
         let task = Task::new("Get stuff done".to_string(), "Category".to_string());
 
-        assert_eq!(task.name, "Get stuff done".to_string());
+        assert_eq!(task.summary, "Get stuff done".to_string());
         assert_eq!(task.category, "Category".to_string());
         assert_eq!(task.status, TaskStatus::Active);
         assert_eq!(task.id.len(), 32);
