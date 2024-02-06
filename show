@@ -3,6 +3,11 @@
 # https://doc.rust-lang.org/rustc/instrument-coverage.html
 # https://llvm.org/docs/CommandGuide/llvm-cov.html#llvm-cov-show
 
+LLVM_PROFILE_FILE=coverage/cov-%p-%m.profraw RUSTFLAGS="-C instrument-coverage" cargo test
+llvm-profdata merge -sparse coverage/cov-*.profraw -o coverage/json5format.profdata
+
+# Note that the 'cargo test' block below uses the --no-run option.
+# This is just getting the list of objects to report on.
 llvm-cov show \
     $( \
       for file in \
@@ -16,7 +21,8 @@ llvm-cov show \
         printf "%s %s " -object $file; \
       done \
     ) \
-    --instr-profile=json5format.profdata --summary-only \
+    --instr-profile=coverage/json5format.profdata \
+    --summary-only \
     --show-instantiations --show-line-counts-or-regions \
     --Xdemangler=rustfilt \
     --ignore-filename-regex='/.cargo/registry' \
