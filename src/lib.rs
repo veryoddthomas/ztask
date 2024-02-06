@@ -37,7 +37,7 @@ struct Arguments {
 pub fn run() -> Result<(), Box<dyn Error>> {
     let args: Arguments = Arguments::parse();
 
-    // Print arguments for debugging
+    // // Print arguments for debugging
     // println!("{:?}", args);
 
     let mut task_list = task::TaskList::new(args.db);
