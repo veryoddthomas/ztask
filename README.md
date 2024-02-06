@@ -32,14 +32,27 @@ cargo install cargo-tarpaulin
 
 ### Run tests and measure coverage
 
-Pick one.  I've seen a few times that I had to `cargo build` explicitly
-before `cargo test` or `cargo tarpaulin` will work.
+Pick one.
 
 ```bash
 cargo test
+```
+
+```bash
+RUSTFLAGS="-C instrument-coverage" cargo test
+llvm-profdata merge -sparse formatjson5.profraw -o formatjson5.profdata
+```
+
+<!--
+Tarpaulin, may be obsolete?
+I've seen a few times that I had to `cargo build` explicitly
+before `cargo test` or `cargo tarpaulin` will work.
+
+```bash
 cargo tarpaulin --implicit-test-threads --command Build
 cargo tarpaulin --implicit-test-threads --command Build --out Html && wslview tarpaulin-report.html
 ```
+-->
 
 ## Checkers
 

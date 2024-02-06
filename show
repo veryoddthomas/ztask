@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# https://doc.rust-lang.org/rustc/instrument-coverage.html
+# https://llvm.org/docs/CommandGuide/llvm-cov.html#llvm-cov-show
+
+llvm-cov show \
+    $( \
+      for file in \
+        $( \
+          RUSTFLAGS="-C instrument-coverage" \
+            cargo test --tests --no-run --message-format=json \
+              | jq -r "select(.profile.test == true) | .filenames[]" \
+              | grep -v dSYM - \
+        ); \
+      do \
+        printf "%s %s " -object $file; \
+      done \
+    ) \
+    --instr-profile=json5format.profdata --summary-only \
+    --show-instantiations --show-line-counts-or-regions \
+    --Xdemangler=rustfilt \
+    --ignore-filename-regex='/.cargo/registry' \
+    --format=html --output-dir=coverage
+    # and/or other options
+
+wslview coverage/index.html
+

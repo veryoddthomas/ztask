@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# https://doc.rust-lang.org/rustc/instrument-coverage.html
+# https://llvm.org/docs/CommandGuide/llvm-cov.html#llvm-cov-report
+
+llvm-cov report \
+    $( \
+      for file in \
+        $( \
+          RUSTFLAGS="-C instrument-coverage" \
+            cargo test --tests --no-run --message-format=json \
+              | jq -r "select(.profile.test == true) | .filenames[]" \
+              | grep -v dSYM - \
+        ); \
+      do \
+        printf "%s %s " -object $file; \
+      done \
+    ) \
+    --instr-profile=json5format.profdata \
+    --summary-only \
+    --ignore-filename-regex='/.cargo/registry' \
+    # and/or other options
+
