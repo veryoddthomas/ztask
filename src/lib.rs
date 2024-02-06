@@ -56,7 +56,7 @@ pub fn run() -> Result<(), Box<dyn Error>> {
             if new_task_names.len() > 1 {
                 // --add was provided with multiple task names
                 // If they are all single word, consider this as a single task
-                let count_multi_word = new_task_names.iter().filter(|name| name.contains(" ")).count();
+                let count_multi_word = new_task_names.iter().filter(|name| name.contains(' ')).count();
                 if count_multi_word == 0 {
                     // All task names are single word
                     // Create single task with those task names

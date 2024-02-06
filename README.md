@@ -40,11 +40,11 @@ cargo test
 
 ```bash
 RUSTFLAGS="-C instrument-coverage" cargo test
-llvm-profdata merge -sparse formatjson5.profraw -o formatjson5.profdata
+llvm-profdata merge -sparse default_*.profraw -o json5format.profdata
 ```
 
 <!--
-Tarpaulin, may be obsolete?
+Tarpaulin, maybe obsolete?
 I've seen a few times that I had to `cargo build` explicitly
 before `cargo test` or `cargo tarpaulin` will work.
 

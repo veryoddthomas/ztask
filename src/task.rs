@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use colored::Colorize;
 use std::collections::VecDeque;
+use std::fmt;
 
 
 // I'm not sure yet if I want to implement
@@ -21,13 +22,26 @@ use std::collections::VecDeque;
 // }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-// #[serde(tag = "type")]
 pub enum TaskStatus {
     #[serde(rename = "active")]    Active,
     #[serde(rename = "backlog")]   Backlog,
     #[serde(rename = "blocked")]   Blocked,
     #[serde(rename = "completed")] Completed,
     #[serde(rename = "sleeping")]  Sleeping,  // Would Snoozed be better?
+}
+
+impl fmt::Display for TaskStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let display_str = match self {
+            TaskStatus::Active => "active",
+            TaskStatus::Backlog => "backlog",
+            TaskStatus::Blocked => "blocked",
+            TaskStatus::Completed => "completed",
+            TaskStatus::Sleeping => "sleeping",
+        };
+
+        write!(f, "{}", display_str)
+    }
 }
 
 /// Task structure
@@ -54,9 +68,9 @@ impl Task {
         let id=&self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
         if colorized {
-            format!("{}  {}  {}", id.bright_green(), self.summary, format!("{:?}",self.status).yellow())
+            format!("{}  {}  {:?}", id.bright_green(), self.summary, self.status.to_string().yellow())
         } else {
-            format!("{}  {}  {}", id, self.summary, format!("{:?}",self.status))
+            format!("{}  {}  {}", id, self.summary, self.status)
         }
     }
 }
@@ -128,24 +142,24 @@ impl TaskList {
     pub fn remove_task(&mut self, id: String) {
         // If we don't find exactly one task that starts with 'id',
         // print a warning and return
-        let match_count = self.tasks.iter().filter(|task| &task.id[0..id.len()] == id).count();
+        let match_count = self.tasks.iter().filter(|task| task.id[0..id.len()] == id).count();
         if match_count !=1 {
             println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
             return;
         }
-        self.tasks.retain(|task| &task.id[0..id.len()] != id)
+        self.tasks.retain(|task| task.id[0..id.len()] != id)
     }
 
     /// Edit the task whose id starts with the id string passed in.
     pub fn edit_task(&mut self, id: String) {
-        let tasks = self.tasks.iter().filter(|task| &task.id[0..id.len()] == id);
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count !=1 {
             println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
             return;
         }
 
-        let result = self.tasks.iter().find(|task| &task.id[0..id.len()] == id);
+        let result = self.tasks.iter().find(|task| task.id[0..id.len()] == id);
         if let Some(task) = result {
             println!("TBD: implement edit for {}", task.to_string(true));
         } else {
