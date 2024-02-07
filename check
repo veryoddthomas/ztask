@@ -1,8 +1,22 @@
 #!/bin/bash
 
+figlet -w 120 Running clippy checker
+
+cargo test
+if [ $? -ne 0 ]; then
+  figlet -w 120 Tests Failed
+  exit 1
+else
+  figlet -w 120 Tests Passed
+fi
+
+printf "\n\n\n"
+
 cargo -q clippy --all --all-targets -- -D warnings
 if [ $? -ne 0 ]; then
-  figlet Time to clean up
+  figlet -w 120 Time to clean up
+  exit 1
 else
-  figlet Clean!
+  figlet -w 120 Clean!
 fi
+
