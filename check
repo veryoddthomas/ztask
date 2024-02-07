@@ -1,0 +1,8 @@
+#!/bin/bash
+
+cargo -q clippy --all --all-targets -- -D warnings
+if [ $? -ne 0 ]; then
+  figlet Time to clean up
+else
+  figlet Clean!
+fi
