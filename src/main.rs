@@ -9,6 +9,7 @@ const DB_PATH: &str = "./data/db.json";
 
 #[derive(Parser,Default,Debug)]
 #[clap(name="ZTask", author="Tom Zakrajsek", version, about)]
+
 /// A very simple Task Manager
 struct Arguments {
 
@@ -18,10 +19,6 @@ struct Arguments {
     /// Database file of tasks
     #[clap(long, default_value = DB_PATH)]
     db: String,
-
-    /// Edit one or more tasks
-    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
-    edit: Option<Vec<String>>,
 
     /// Increase logging verbosity
     #[clap(short, long, action=ArgAction::Count)]
@@ -45,7 +42,12 @@ enum SubCommand {
     },
     /// Del one or more tasks
     Del {
-        /// Name of task(s) to delete
+        /// Id(s) of task(s) to delete
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+    },
+    Edit {
+        /// Id(s) of task(s) to edit
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
@@ -65,20 +67,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     // println!("{:?}", args);
 
     let mut task_list = task::TaskList::new(args.db);
-
-    // Check if user requested to edit any tasks with --edit
-    if let Some(task_ids) = args.edit {
-        if task_ids.is_empty() {
-            // --edit was provided without id(s)
-            println!("--edit arg list is empty, which is not allowed")
-        } else {
-            // --edit was provided with id(s)
-            // Edit selected tasks
-            for id in task_ids {
-                task_list.edit_task(id);
-            }
-        }
-    }
 
     if let Some(subcmd) = args.command {
         match subcmd {
@@ -100,6 +88,12 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
+            SubCommand::Edit { task_ids } => match process_edit(&mut task_list, task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) updated", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
         }
     }
 
@@ -109,6 +103,20 @@ pub fn run() -> Result<(), Box<dyn Error>> {
 fn process_list(task_list: &mut task::TaskList) -> Result<usize, Box<dyn Error>> {
     task_list.print_list();
     Ok(task_list.tasks.len())  // TODO: return number of tasks listed
+}
+
+fn process_edit(task_list: &mut task::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let mut edit_count = 0;
+    if task_ids.is_empty() {
+        // TODO: Should this edit the most recent task?
+        println!("edit arg list is empty, which is not currently allowed");
+    } else {
+        // Edit selected tasks
+        for id in task_ids {
+            edit_count += task_list.edit_task(id);
+        }
+    }
+    Ok(edit_count)
 }
 
 fn process_del(task_list: &mut task::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {

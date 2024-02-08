@@ -136,19 +136,21 @@ impl TaskList {
     }
 
     /// Edit the task whose id starts with the id string passed in.
-    pub fn edit_task(&mut self, id: String) {
+    pub fn edit_task(&mut self, id: String) -> usize{
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count !=1 {
             println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
-            return;
+            return 0;
         }
 
         let result = self.tasks.iter().find(|task| task.id[0..id.len()] == id);
         if let Some(task) = result {
             println!("TBD: implement edit for {}", task.to_string(true));
+            1
         } else {
-            println!("Task {id} not found")
+            println!("Task {id} not found");
+            0
         }
     }
 
