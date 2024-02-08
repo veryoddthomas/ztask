@@ -10,9 +10,9 @@ else
   figlet -w 120 Tests Passed
 fi
 
-printf "\n\n\n"
+printf "\n"
 
-cargo -q clippy --all --all-targets -- -D warnings
+cargo clippy --all --all-targets -- -D warnings
 if [ $? -ne 0 ]; then
   figlet -w 120 Time to clean up
   exit 1

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use colored::Colorize;
 use std::collections::VecDeque;
-use std::fmt;
+// use std::fmt;
 
 
 // I'm not sure yet if I want to implement
@@ -30,17 +30,16 @@ pub enum TaskStatus {
     #[serde(rename = "sleeping")]  Sleeping,  // Would Snoozed be better?
 }
 
-impl fmt::Display for TaskStatus {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let display_str = match self {
+impl TaskStatus {
+    fn label(&self) -> String {
+        let label = match self {
             TaskStatus::Active => "active",
             TaskStatus::Backlog => "backlog",
             TaskStatus::Blocked => "blocked",
             TaskStatus::Completed => "completed",
             TaskStatus::Sleeping => "sleeping",
         };
-
-        write!(f, "{}", display_str)
+        label.to_string()
     }
 }
 
@@ -68,9 +67,9 @@ impl Task {
         let id=&self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
         if colorized {
-            format!("{}  {}  {:?}", id.bright_green(), self.summary, self.status.to_string().yellow())
+            format!("{}  {}  {}", id.bright_green(), self.summary, self.status.label().bright_white())
         } else {
-            format!("{}  {}  {}", id, self.summary, self.status)
+            format!("{}  {}  {}", id, self.summary, self.status.label())
         }
     }
 }

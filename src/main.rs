@@ -1,5 +1,5 @@
 use std::process;
-use clap::{Parser, ArgAction};
+use clap::{Parser, Subcommand, ArgAction};
 use std::error::Error;
 
 mod task;
@@ -11,13 +11,13 @@ const DB_PATH: &str = "./data/db.json";
 #[clap(name="ZTask", author="Tom Zakrajsek", version, about)]
 /// A very simple Task Manager
 struct Arguments {
+
+    #[command(subcommand)]
+    command: Option<SubCommand>,
+
     /// Database file of tasks
     #[clap(long, default_value = DB_PATH)]
     db: String,
-
-    /// Add one or more new tasks
-    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
-    add: Option<Vec<String>>,
 
     /// Delete one or more tasks
     #[clap(short, long, num_args(0..), action=ArgAction::Append)]
@@ -27,13 +27,26 @@ struct Arguments {
     #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     edit: Option<Vec<String>>,
 
-    /// List all tasks
-    #[clap(short, long, action=ArgAction::SetTrue )]
-    list: bool,
-
     /// Increase logging verbosity
     #[clap(short, long, action=ArgAction::Count)]
     verbose: u8,
+}
+
+#[derive(Subcommand, Debug)]
+enum SubCommand {
+    /// List existing tasks
+    List {
+        // /// List all tasks
+        // /// Increase logging verbosity
+        // #[clap(short, long, action=ArgAction::Count)]
+        // verbose: u8,
+    },
+    /// Add one or more new tasks
+    Add {
+        /// Name of task(s) to add
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_names: Option<Vec<String>>,
+    },
 }
 
 fn main() {
@@ -41,7 +54,6 @@ fn main() {
         eprintln!("Application error: {e}");
         process::exit(1);
     }
-
 }
 
 pub fn run() -> Result<(), Box<dyn Error>> {
@@ -51,44 +63,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
     // println!("{:?}", args);
 
     let mut task_list = task::TaskList::new(args.db);
-
-    // Check if user requested to add new tasks with --add
-    if let Some(new_task_names) = args.add {
-        if new_task_names.is_empty() {
-            // --add was provided without name(s)
-            // Create default task with default name
-            let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
-            let new_task = task::Task::new(default_task_name, "quick".to_string());
-            task_list.add_task(new_task);
-        } else {
-            // --add was provided with name(s)
-            // Create new tasks with those names
-            if new_task_names.len() > 1 {
-                // --add was provided with multiple task names
-                // If they are all single word, consider this as a single task
-                let count_multi_word = new_task_names.iter().filter(|name| name.contains(' ')).count();
-                if count_multi_word == 0 {
-                    // All task names are single word
-                    // Create single task with those task names
-                    let name = new_task_names.join(" ");
-                    let new_task = task::Task::new(name, "quick".to_string());
-                    task_list.add_task(new_task);
-                } else {
-                    // Some task names are multi-word
-                    // Create multiple tasks with those task names
-                    for name in new_task_names {
-                        let new_task = task::Task::new(name, "quick".to_string());
-                        task_list.add_task(new_task);
-                    }
-                }
-            } else {
-                // --add was provided with single task name
-                // Create single task with that task name
-                let new_task = task::Task::new(new_task_names[0].clone(), "quick".to_string());
-                task_list.add_task(new_task);
-            }
-        }
-    }
 
     // Check if user requested to edit any tasks with --edit
     if let Some(task_ids) = args.edit {
@@ -120,17 +94,71 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    // Check if user requested to list tasks
-    if args.list {
-        task_list.print_list();
-        if args.verbose > 0 {
-            println!("task count: {}", task_list.num_tasks());
+    if let Some(subcmd) = args.command {
+        match subcmd {
+            SubCommand::List { } => match process_list(&mut task_list) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) found", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
+            SubCommand::Add { task_names } => match process_add(&mut task_list, task_names.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) added", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
         }
     }
 
     Ok(())
 }
 
+fn process_list(task_list: &mut task::TaskList) -> Result<usize, Box<dyn Error>> {
+    task_list.print_list();
+    Ok(task_list.tasks.len())  // TODO: return number of tasks listed
+}
+
+fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let prior_task_count = task_list.tasks.len();
+    if new_task_names.is_empty() {
+        // --add was provided without name(s)
+        // Create default task with default name
+        let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
+        let new_task = task::Task::new(default_task_name, "quick".to_string());
+        task_list.add_task(new_task);
+    } else {
+        // --add was provided with name(s)
+        // Create new tasks with those names
+        if new_task_names.len() > 1 {
+            // --add was provided with multiple task names
+            // If they are all single word, consider this as a single task
+            let count_multi_word = new_task_names.iter().filter(|name| name.contains(' ')).count();
+            if count_multi_word == 0 {
+                // All task names are single word
+                // Create single task with those task names
+                let name = new_task_names.join(" ");
+                let new_task = task::Task::new(name, "quick".to_string());
+                task_list.add_task(new_task);
+            } else {
+                // Some task names are multi-word
+                // Create multiple tasks with those task names
+                for name in new_task_names {
+                    let new_task = task::Task::new(name, "quick".to_string());
+                    task_list.add_task(new_task);
+                }
+            }
+        } else {
+            // --add was provided with single task name
+            // Create single task with that task name
+            let new_task = task::Task::new(new_task_names[0].clone(), "quick".to_string());
+            task_list.add_task(new_task);
+        }
+    }
+    // return number of tasks added
+    Ok(task_list.tasks.len() - prior_task_count)
+
+}
 
 #[cfg(test)]
 mod tests {
@@ -150,8 +178,8 @@ mod tests {
         let mut cmd = Command::cargo_bin("ztask").unwrap();
         let assert = cmd
             .arg("--db").arg(test_db)
-            .arg("-l")
             .arg("-v")
+            .arg("list")
             // .arg("-a")
             .assert();
         assert
