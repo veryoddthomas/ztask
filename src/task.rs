@@ -7,19 +7,6 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use colored::Colorize;
 use std::collections::VecDeque;
-// use std::fmt;
-
-
-// I'm not sure yet if I want to implement
-// a TaskType enum or if that would be
-// too inflexible.
-
-// #[derive(Serialize, Deserialize, Clone)]
-// // #[serde(tag = "type")]
-// pub enum TaskType {
-//     #[serde(rename = "quick")]  Quick,
-//     #[serde(rename = "learning")]   Learning,
-// }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum TaskStatus {

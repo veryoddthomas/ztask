@@ -19,10 +19,6 @@ struct Arguments {
     #[clap(long, default_value = DB_PATH)]
     db: String,
 
-    /// Delete one or more tasks
-    #[clap(short, long, num_args(0..), action=ArgAction::Append)]
-    del: Option<Vec<String>>,
-
     /// Edit one or more tasks
     #[clap(short, long, num_args(0..), action=ArgAction::Append)]
     edit: Option<Vec<String>>,
@@ -46,6 +42,12 @@ enum SubCommand {
         /// Name of task(s) to add
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_names: Option<Vec<String>>,
+    },
+    /// Del one or more tasks
+    Del {
+        /// Name of task(s) to delete
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
     },
 }
 
@@ -78,22 +80,6 @@ pub fn run() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    // Check if user requested to delete any tasks with --del
-    if let Some(task_ids) = args.del {
-        if task_ids.is_empty() {
-            // --del was provided without id(s)
-            // Remove last task
-            let final_length = task_list.tasks.len().saturating_sub(1);  // remove last task
-            task_list.tasks.truncate(final_length);
-        } else {
-            // --del was provided with id(s)
-            // Remove selected tasks
-            for id in task_ids {
-                task_list.remove_task(id);
-            }
-        }
-    }
-
     if let Some(subcmd) = args.command {
         match subcmd {
             SubCommand::List { } => match process_list(&mut task_list) {
@@ -108,6 +94,12 @@ pub fn run() -> Result<(), Box<dyn Error>> {
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
+            SubCommand::Del { task_ids } => match process_del(&mut task_list, task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) removed", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
         }
     }
 
@@ -119,19 +111,31 @@ fn process_list(task_list: &mut task::TaskList) -> Result<usize, Box<dyn Error>>
     Ok(task_list.tasks.len())  // TODO: return number of tasks listed
 }
 
+fn process_del(task_list: &mut task::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let prior_task_count = task_list.tasks.len();
+    if task_ids.is_empty() {
+        // Remove last task
+        let final_length = task_list.tasks.len().saturating_sub(1);  // remove last task
+        task_list.tasks.truncate(final_length);
+    } else {
+        // Remove selected tasks
+        for id in task_ids {
+            task_list.remove_task(id);
+        }
+    }
+    Ok(prior_task_count - task_list.tasks.len())
+}
+
 fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> Result<usize, Box<dyn Error>> {
     let prior_task_count = task_list.tasks.len();
     if new_task_names.is_empty() {
-        // --add was provided without name(s)
         // Create default task with default name
         let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
         let new_task = task::Task::new(default_task_name, "quick".to_string());
         task_list.add_task(new_task);
     } else {
-        // --add was provided with name(s)
-        // Create new tasks with those names
+        // Create new tasks with provided names
         if new_task_names.len() > 1 {
-            // --add was provided with multiple task names
             // If they are all single word, consider this as a single task
             let count_multi_word = new_task_names.iter().filter(|name| name.contains(' ')).count();
             if count_multi_word == 0 {
@@ -149,7 +153,6 @@ fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> R
                 }
             }
         } else {
-            // --add was provided with single task name
             // Create single task with that task name
             let new_task = task::Task::new(new_task_names[0].clone(), "quick".to_string());
             task_list.add_task(new_task);
