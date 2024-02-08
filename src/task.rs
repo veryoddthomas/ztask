@@ -17,16 +17,15 @@ pub enum TaskStatus {
     #[serde(rename = "sleeping")]  Sleeping,  // Would Snoozed be better?
 }
 
-impl TaskStatus {
-    fn label(&self) -> String {
-        let label = match self {
-            TaskStatus::Active => "active",
-            TaskStatus::Backlog => "backlog",
-            TaskStatus::Blocked => "blocked",
-            TaskStatus::Completed => "completed",
-            TaskStatus::Sleeping => "sleeping",
-        };
-        label.to_string()
+impl std::fmt::Display for TaskStatus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            TaskStatus::Active => write!(f, "active"),
+            TaskStatus::Backlog => write!(f, "backlog"),
+            TaskStatus::Blocked => write!(f, "blocked"),
+            TaskStatus::Completed => write!(f, "completed"),
+            TaskStatus::Sleeping => write!(f, "sleeping"),
+        }
     }
 }
 
@@ -54,9 +53,9 @@ impl Task {
         let id=&self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
         if colorized {
-            format!("{}  {}  {}", id.bright_green(), self.summary, self.status.label().bright_white())
+            format!("{}  {}  {}", id.bright_green(), self.summary, self.status.to_string().bright_white())
         } else {
-            format!("{}  {}  {}", id, self.summary, self.status.label())
+            format!("{}  {}  {}", id, self.summary, self.status)
         }
     }
 }
