@@ -26,10 +26,6 @@ pub struct Arguments {
 enum Command {
     /// List existing tasks
     List {
-        // /// List all tasks
-        // /// Increase logging verbosity
-        // #[clap(short, long, action=ArgAction::Count)]
-        // verbose: u8,
     },
     /// Add one or more new tasks
     Add {
@@ -171,7 +167,6 @@ mod tests {
         let _ = fs::remove_file(test_db);
         test_db.to_string()
     }
-
 
     // Tests for "list""
 
