@@ -119,8 +119,10 @@ impl TaskList {
     }
 
     /// Add a task to the list.
-    pub fn add_task(&mut self, task: Task) {
-        self.tasks.push_back(task)
+    pub fn add_task(&mut self, task: Task) -> String {
+        let id = task.id.clone();
+        self.tasks.push_back(task);
+        id
     }
 
     /// Remove the task whose id starts with the id string passed in.

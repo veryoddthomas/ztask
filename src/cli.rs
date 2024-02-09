@@ -166,14 +166,33 @@ fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> R
 
 }
 
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use uuid::Uuid;
 
-    fn _setup_empty_db(override_db: Option<&str>) -> String {
+    fn __create_temp_db(override_db: Option<&str>) -> String {
+        // use std::fs;
+        use std::path::Path;
+
+        let random_db = format!("data/{}-test.json",Uuid::new_v4().simple());
+        let test_db = override_db.unwrap_or(&random_db);
+        if Path::new(&test_db).exists() {
+            panic!("Temporary test database already exists: {}", test_db);
+        }
+        // let _ = fs::remove_file(&test_db);  // in case it already exists
+        test_db.to_string()
+    }
+
+    fn __destroy_temp_db(test_db: String) -> String {
         use std::fs;
-        let test_db = override_db.unwrap_or("data/test.json");
-        let _ = fs::remove_file(test_db);
+        use std::path::Path;
+
+        if test_db.starts_with("data/") && test_db.ends_with("-test.json") && Path::new(&test_db).exists() {
+            let _ = fs::remove_file(&test_db);  // in case it already exists
+        }
         test_db.to_string()
     }
 
@@ -181,68 +200,101 @@ mod tests {
 
     #[test]
     fn verify_list() {
-        let db = _setup_empty_db(None);
+        let db = __create_temp_db(None);
         let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "list"]
+            ["ztask", "--db", &db, "list"]
         );
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
+        __destroy_temp_db(db);
     }
 
     // Tests for "add"
 
     #[test]
     fn verify_add_default() {
-        let db = _setup_empty_db(None);
+        let db = __create_temp_db(None);
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "add"]
         );
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
+        __destroy_temp_db(db);
     }
 
     #[test]
     fn verify_add_single() {
-        let db = _setup_empty_db(None);
+        let db = __create_temp_db(None);
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "add", "test task"]
         );
         // Should create 1 task with name "test task"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
+        __destroy_temp_db(db);
     }
 
     #[test]
     fn verify_add_multiple() {
-        let db = _setup_empty_db(None);
+        let db = __create_temp_db(None);
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "add", "test task #1", "test task #2", "task3", "task4"]
         );
         // Should create 4 tasks with names "test task #1", "test task #2", "task3", "task4"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
+        __destroy_temp_db(db);
     }
 
     #[test]
     fn verify_add_with_word_merge() {
-        let db = _setup_empty_db(None);
+        let db = __create_temp_db(None);
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "add", "create", "single", "task"]
         );
         // Should create 1 task with name "create single task"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
+        __destroy_temp_db(db);
     }
 
     // Tests for "del"
 
     #[test]
     fn verify_delete_default() {
-        let db = _setup_empty_db(None);
+        let db = __create_temp_db(None);
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "del"]
         );
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
+        __destroy_temp_db(db);
+    }
+
+    // #[test]
+    // fn verify_delete_single() {
+    //     let db = __create_temp_db(None);
+    //     let mut task_list = task::TaskList::new(db);
+    //     task_list.add_task(task::Task::new("test task 1".to_string(), "quick".to_string()));
+    //     task_list.add_task(task::Task::new("test task 1".to_string(), "quick".to_string()));
+    //     let args: Arguments = Arguments::parse_from(
+    //         ["ztask", "--db", &db, "-v", "del"]
+    //     );
+    //     println!("args: {:?}", args);
+    //     run(Some(args)).unwrap();
+    //     __destroy_temp_db(db);
+    // }
+
+    // Tests for "edit"
+
+    #[test]
+    fn verify_edit_default() {
+        let db = __create_temp_db(None);
+        let args: Arguments = Arguments::parse_from(
+            ["ztask", "--db", &db, "-v", "edit"]
+        );
+        println!("args: {:?}", args);
+        run(Some(args)).unwrap();
+        __destroy_temp_db(db);
     }
 }
