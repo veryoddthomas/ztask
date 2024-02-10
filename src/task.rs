@@ -1,6 +1,7 @@
 use chrono::{DateTime, Local};
 use std::fs::File;
 use std::io::Write;
+
 use std::fs;
 use std::io;
 use serde::{Deserialize, Serialize};
@@ -295,6 +296,32 @@ impl TaskList {
 mod tests {
     use super::*;
 
+    fn __create_temp_db(initial_task_count: i32) -> String {
+        use std::path::Path;
+        fs::create_dir_all("data/temp").unwrap();
+        let db = format!("data/temp/{}-test.json",Uuid::new_v4().simple());
+        if Path::new(&db).exists() {
+            panic!("Temporary test database already exists: {}", db);
+        }
+
+        // let db = db.to_string();
+        let mut task_list = TaskList::new(db.clone());
+        for i in 0..initial_task_count {
+            task_list.add_task(Task::new(format!("test task {i}").to_string(), "quick".to_string()));
+        }
+        db
+    }
+
+    fn __destroy_temp_db(test_db: String) -> String {
+        use std::path::Path;
+
+        if test_db.starts_with("data/temp") && test_db.ends_with("-test.json") && Path::new(&test_db).exists() {
+            let _ = fs::remove_file(&test_db);
+        }
+        test_db.to_string()
+    }
+
+
     /// Verify default task settings
     #[test]
     fn check_task_defaults() {
@@ -306,4 +333,27 @@ mod tests {
         assert_eq!(task.id.len(), 32);
     }
 
+    #[test]
+    fn verify_remove_single() {
+        let db = __create_temp_db(2);
+        let mut task_list = TaskList::new(db.clone());
+        let id = task_list.tasks.get(0).unwrap().id.clone();
+
+        task_list.remove_task(id);
+
+        drop(task_list);
+        __destroy_temp_db(db);
+    }
+
+    #[test]
+    fn verify_edit_single() {
+        let db = __create_temp_db(2);
+        let mut task_list = TaskList::new(db.clone());
+        let id = task_list.tasks.get(0).unwrap().id.clone();
+
+        task_list.edit_task(id);
+
+        drop(task_list);
+        __destroy_temp_db(db);
+    }
 }
