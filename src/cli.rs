@@ -170,30 +170,8 @@ fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> R
 #[cfg(test)]
 mod tests {
     use super::*;
-    use uuid::Uuid;
-    use std::fs;
-    use std::path::Path;
-
-    fn __create_temp_db(initial_task_count: i32) -> String {
-        fs::create_dir_all("data/temp").unwrap();
-        let db = format!("data/temp/{}-test.json",Uuid::new_v4().simple());
-        if Path::new(&db).exists() {
-            panic!("Temporary test database already exists: {}", db);
-        }
-
-        let mut task_list = task::TaskList::new(db.clone());
-        for i in 0..initial_task_count {
-            task_list.add_task(task::Task::new(format!("test task {i}").to_string(), "quick".to_string()));
-        }
-        db
-    }
-
-    fn __destroy_temp_db(test_db: String) -> String {
-        if test_db.starts_with("data/temp") && test_db.ends_with("-test.json") && Path::new(&test_db).exists() {
-            let _ = fs::remove_file(&test_db);
-        }
-        test_db.to_string()
-    }
+    use task::tests::__create_temp_db;
+    use task::tests::__destroy_temp_db;
 
     // Tests for "list""
 

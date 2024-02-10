@@ -293,10 +293,11 @@ impl TaskList {
 // xref: /usr/local/develop/rust-commandline-example/src/main.rs
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
 
-    fn __create_temp_db(initial_task_count: i32) -> String {
+    /// Create a temporary test database with the given number of tasks
+    pub fn __create_temp_db(initial_task_count: i32) -> String {
         use std::path::Path;
         fs::create_dir_all("data/temp").unwrap();
         let db = format!("data/temp/{}-test.json",Uuid::new_v4().simple());
@@ -312,7 +313,8 @@ mod tests {
         db
     }
 
-    fn __destroy_temp_db(test_db: String) -> String {
+    /// Remove the named test database
+    pub fn __destroy_temp_db(test_db: String) -> String {
         use std::path::Path;
 
         if test_db.starts_with("data/temp") && test_db.ends_with("-test.json") && Path::new(&test_db).exists() {
@@ -320,7 +322,6 @@ mod tests {
         }
         test_db.to_string()
     }
-
 
     /// Verify default task settings
     #[test]
@@ -337,7 +338,7 @@ mod tests {
     fn verify_remove_single() {
         let db = __create_temp_db(2);
         let mut task_list = TaskList::new(db.clone());
-        let id = task_list.tasks.get(0).unwrap().id.clone();
+        let id = task_list.tasks.get(1).unwrap().id.clone();
 
         task_list.remove_task(id);
 
@@ -349,7 +350,7 @@ mod tests {
     fn verify_edit_single() {
         let db = __create_temp_db(2);
         let mut task_list = TaskList::new(db.clone());
-        let id = task_list.tasks.get(0).unwrap().id.clone();
+        let id = task_list.tasks.get(1).unwrap().id.clone();
 
         task_list.edit_task(id);
 
