@@ -27,6 +27,7 @@ llvm-cov show \
     --Xdemangler=rustfilt \
     --ignore-filename-regex='/.cargo/registry' \
     --ignore-filename-regex='library/std/src' \
+    --ignore-filename-regex='/main.rs' \
     --format=html --output-dir=coverage
     # and/or other options
 

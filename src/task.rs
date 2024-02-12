@@ -305,7 +305,6 @@ pub mod tests {
             panic!("Temporary test database already exists: {}", db);
         }
 
-        // let db = db.to_string();
         let mut task_list = TaskList::new(db.clone());
         for i in 0..initial_task_count {
             task_list.add_task(Task::new(format!("test task {i}").to_string(), "quick".to_string()));
@@ -341,6 +340,7 @@ pub mod tests {
         let id = task_list.tasks.get(1).unwrap().id.clone();
 
         task_list.remove_task(id);
+        assert_eq!(task_list.tasks.len(), 1);
 
         drop(task_list);
         __destroy_temp_db(db);
@@ -353,6 +353,7 @@ pub mod tests {
         let id = task_list.tasks.get(1).unwrap().id.clone();
 
         task_list.edit_task(id);
+        assert_eq!(task_list.tasks.len(), 2);
 
         drop(task_list);
         __destroy_temp_db(db);

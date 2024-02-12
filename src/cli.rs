@@ -166,12 +166,19 @@ fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> R
 
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use task::tests::__create_temp_db;
     use task::tests::__destroy_temp_db;
+
+    #[test]
+    #[should_panic]
+    fn test_invalid_args() {
+        if let Err(_err) = Arguments::try_parse_from(["ztask", "--undefined-flag-guaranteed"]) {
+            panic!("--undefined-flag-guaranteed failed as expected");
+        }
+    }
 
     // Tests for "list""
 
