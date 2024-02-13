@@ -38,6 +38,7 @@ pub struct Task {
     pub category: String,
     pub created_at: DateTime<Local>,
     pub status: TaskStatus,
+    pub blocked_by: VecDeque<String>,
 }
 
 impl Task {
@@ -48,18 +49,41 @@ impl Task {
             category,
             created_at: Local::now(),
             status: TaskStatus::Active,
+            // blocked_by: VecDeque::from(["9d8607f24".to_string(), "c1ed178b5".to_string()]),
+            blocked_by: VecDeque::new(),
         }
     }
+
     pub fn to_string(&self, colorized: bool) -> String {
-        let id=&self.id[0..9];
+        let id = &self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
-        if colorized {
-            format!("{}  {}  {}", id.bright_green(), self.summary, self.status.to_string().bright_white())
+
+        let summary = self.summary.to_string();
+        let status = self.status.to_string();
+        let blocked;
+        if self.blocked_by.is_empty() {
+            blocked = "".to_string();
         } else {
-            format!("{}  {}  {}", id, self.summary, self.status)
+            blocked = self
+                .blocked_by
+                .iter()
+                .map(|s| &s[..9])
+                .collect::<Vec<_>>()
+                .join(", ");
+        };
+
+        if colorized {
+            let id = id.bright_green();
+            let summary = summary.bright_black();
+            let status = status.bright_white();
+            let blocked = blocked.bright_red();
+            format!("{}  {}  {}  {}", id, summary, status, blocked)
+        } else {
+            format!("{}  {}  {}  {}", id, summary, status, blocked)
         }
     }
 }
+
 
 pub struct TaskList {
     pub tasks: VecDeque<Task>,
