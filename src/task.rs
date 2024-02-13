@@ -35,6 +35,7 @@ impl std::fmt::Display for TaskStatus {
 pub struct Task {
     pub id: String,
     pub summary: String,
+    pub details: String,
     pub category: String,
     pub created_at: DateTime<Local>,
     pub status: TaskStatus,
@@ -46,6 +47,7 @@ impl Task {
         Task {
             id: Uuid::new_v4().simple().to_string(),
             summary,
+            details: "".to_string(),
             category,
             created_at: Local::now(),
             status: TaskStatus::Active,
