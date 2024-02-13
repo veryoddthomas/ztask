@@ -100,7 +100,7 @@ impl Task {
         let serialized = serde_json::to_string_pretty(&self)?;
 
         // Create a temporary file
-        let mut temp_file = tempfile::NamedTempFile::new()?;
+        let mut temp_file = tempfile::Builder::new().suffix(".json").tempfile()?;
 
         // Write some content to the temporary file
         writeln!(temp_file, "{}", serialized)?;
