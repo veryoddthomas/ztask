@@ -62,16 +62,15 @@ impl Task {
 
         let summary = self.summary.to_string();
         let status = self.status.to_string();
-        let blocked;
-        if self.blocked_by.is_empty() {
-            blocked = "".to_string();
+        let blocked = if self.blocked_by.is_empty() {
+            "".to_string()
         } else {
-            blocked = self
+            self
                 .blocked_by
                 .iter()
                 .map(|s| &s[..9])
                 .collect::<Vec<_>>()
-                .join(", ");
+                .join(", ")
         };
 
         if colorized {
