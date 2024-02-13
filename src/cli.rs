@@ -22,6 +22,7 @@ pub struct Arguments {
     verbose: u8,
 }
 
+/// Subcommands for the application
 #[derive(Subcommand, Debug)]
 enum Command {
 
