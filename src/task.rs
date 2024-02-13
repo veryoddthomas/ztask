@@ -1,13 +1,15 @@
 use chrono::{DateTime, Local};
 use std::fs::File;
-use std::io::Write;
+use std::io::{self, Read, Write};
 
 use std::fs;
-use std::io;
+use std::env;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use colored::Colorize;
 use std::collections::VecDeque;
+
+use std::process::Command;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum TaskStatus {
@@ -56,6 +58,15 @@ impl Task {
         }
     }
 
+    fn update_from(&mut self, other: &Task) {
+        assert_eq!(self.id, other.id);
+        self.summary = other.summary.clone();
+        self.details = other.details.clone();
+        self.category = other.category.clone();
+        self.status = other.status.clone();
+        self.blocked_by = other.blocked_by.clone();
+    }
+
     pub fn to_string(&self, colorized: bool) -> String {
         let id = &self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
@@ -82,6 +93,47 @@ impl Task {
         } else {
             format!("{}  {}  {}  {}", id, summary, status, blocked)
         }
+    }
+
+    /// Invoke the default editor to edit the task
+    fn invoke_editor(&mut self) -> Result<(), io::Error> {
+        let serialized = serde_json::to_string_pretty(&self)?;
+
+        // Create a temporary file
+        let mut temp_file = tempfile::NamedTempFile::new()?;
+
+        // Write some content to the temporary file
+        writeln!(temp_file, "{}", serialized)?;
+
+        // Get the path to the temporary file
+        let file_path = temp_file.path();
+
+        // Determine the default editor based on the environment variables
+        let editor = env::var("EDITOR").unwrap_or_else(|_| "nano".to_string());
+
+        if !cfg!(test) {
+            // Invoke the default editor to open the temporary file,
+            // as long as we're not running tests
+            Command::new(editor)
+                .arg(file_path)
+                .status()
+                .expect("Failed to open the editor");
+            }
+
+        // Reopen the temporary file for reading
+        let file_path = temp_file.path();
+        let mut file = File::open(file_path)?;
+
+        // Read the entire contents into a buffer
+        let mut updates = String::new();
+        file.read_to_string(&mut updates)?;
+
+        // Deserialize the buffer into a Task.  If it can't be parsed,
+        // default to the original task values
+        let updated_task: Task = serde_json::from_str(&updates).unwrap_or(self.clone());
+        self.update_from(&updated_task);
+
+        Ok(())
     }
 }
 
@@ -172,9 +224,10 @@ impl TaskList {
             return 0;
         }
 
-        let result = self.tasks.iter().find(|task| task.id[0..id.len()] == id);
+        let result = self.tasks.iter_mut().find(|task| task.id[0..id.len()] == id);
+
         if let Some(task) = result {
-            println!("TBD: implement edit for {}", task.to_string(true));
+            task.invoke_editor().unwrap_or_default();
             1
         } else {
             println!("Task {id} not found");
