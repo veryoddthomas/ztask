@@ -66,6 +66,35 @@ impl Task {
         self.blocked_by = other.blocked_by.clone();
     }
 
+    pub fn format_multiline(&self, colorized: bool) -> String {
+        let id = &self.id[0..9];
+        // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
+
+        let summary = self.summary.to_string();
+        let status = self.status.to_string();
+        let details = self.details.to_string();
+        let blocked = if self.blocked_by.is_empty() {
+            "".to_string()
+        } else {
+            self
+                .blocked_by
+                .iter()
+                .map(|s| &s[..9])
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+
+        if colorized {
+            let id = id.bright_green();
+            let summary = summary.bright_black();
+            let status = status.bright_white();
+            let blocked = blocked.bright_red();
+            format!("id: {}\nsummary: {}\nstatus: {}\nblocked by: {}\ndetails: {}\n", id, summary, status, blocked, details)
+        } else {
+            format!("id: {}\nsummary: {}\nstatus: {}\nblocked by: {}\ndetails: {}\n", id, summary, status, blocked, details)
+        }
+    }
+
     pub fn to_string(&self, colorized: bool) -> String {
         let id = &self.id[0..9];
         // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();

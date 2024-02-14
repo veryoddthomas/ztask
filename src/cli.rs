@@ -63,7 +63,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 
     if let Some(subcmd) = args.command {
         match subcmd {
-            Command::List { } => match process_list(&mut task_list) {
+            Command::List { } => match process_list(&mut task_list, args.verbose) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task(s) found", c)
                 },
@@ -93,8 +93,8 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn process_list(task_list: &mut tasklist::TaskList) -> Result<usize, Box<dyn Error>> {
-    task_list.print_list();
+fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8) -> Result<usize, Box<dyn Error>> {
+    task_list.print_list(verbosity);
     Ok(task_list.tasks.len())
 }
 
