@@ -1,5 +1,6 @@
 use std::error::Error;
 use crate::task;
+use crate::tasklist;
 use clap::{Parser, Subcommand, ArgAction};
 
 /// Default database path
@@ -58,7 +59,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     // // Print arguments for debugging
     // println!("{:?}", args);
 
-    let mut task_list = task::TaskList::new(args.db);
+    let mut task_list = tasklist::TaskList::new(args.db);
 
     if let Some(subcmd) = args.command {
         match subcmd {
@@ -92,12 +93,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn process_list(task_list: &mut task::TaskList) -> Result<usize, Box<dyn Error>> {
+fn process_list(task_list: &mut tasklist::TaskList) -> Result<usize, Box<dyn Error>> {
     task_list.print_list();
     Ok(task_list.tasks.len())
 }
 
-fn process_edit(task_list: &mut task::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
     let mut edit_count = 0;
     if task_ids.is_empty() {
         // TODO: Should this edit the most recent task?
@@ -111,7 +112,7 @@ fn process_edit(task_list: &mut task::TaskList, task_ids: Vec<String>) -> Result
     Ok(edit_count)
 }
 
-fn process_del(task_list: &mut task::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_del(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
     let prior_task_count = task_list.tasks.len();
     if task_ids.is_empty() {
         // Remove last task
@@ -126,7 +127,7 @@ fn process_del(task_list: &mut task::TaskList, task_ids: Vec<String>) -> Result<
     Ok(prior_task_count - task_list.tasks.len())
 }
 
-fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
+fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
     let mut created_task_ids: Vec<String> = Vec::new();
     if new_task_names.is_empty() {
         // Create default task with default name
@@ -170,8 +171,8 @@ fn process_add(task_list: &mut task::TaskList, new_task_names: Vec<String>) -> R
 #[cfg(test)]
 mod tests {
     use super::*;
-    use task::tests::__create_temp_db;
-    use task::tests::__destroy_temp_db;
+    use tasklist::tests::__create_temp_db;
+    use tasklist::tests::__destroy_temp_db;
 
     #[test]
     #[should_panic]
@@ -267,7 +268,7 @@ mod tests {
     #[test]
     fn verify_delete_single() {
         let db = __create_temp_db(2);
-        let task_list = task::TaskList::new(db.clone());
+        let task_list = tasklist::TaskList::new(db.clone());
         let id = task_list.tasks.get(1).unwrap().id.clone();
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "del", &id]
@@ -306,7 +307,7 @@ mod tests {
     #[test]
     fn verify_edit_single() {
         let db = __create_temp_db(2);
-        let task_list = task::TaskList::new(db.clone());
+        let task_list = tasklist::TaskList::new(db.clone());
         let id = task_list.tasks.get(1).unwrap().id.clone();
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "edit", &id]
