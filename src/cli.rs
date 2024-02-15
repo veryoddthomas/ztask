@@ -2,6 +2,7 @@ use std::error::Error;
 use crate::task;
 use crate::tasklist;
 use clap::{Parser, Subcommand, ArgAction};
+use colored::Colorize;
 
 /// Default database path
 const DB_PATH: &str = "./data/db.json";
@@ -29,6 +30,9 @@ enum Command {
 
     /// List existing tasks
     List {
+        /// Increase logging verbosity
+        #[clap(short, long, action=ArgAction::Count)]
+        verbose: u8,
     },
 
     /// Add one or more new tasks
@@ -63,7 +67,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 
     if let Some(subcmd) = args.command {
         match subcmd {
-            Command::List { } => match process_list(&mut task_list, args.verbose) {
+            Command::List { verbose } => match process_list(&mut task_list, std::cmp::max(args.verbose, verbose)) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task(s) found", c)
                 },
@@ -93,8 +97,90 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+/// Print all tasks
+pub fn print_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
+    for task in task_list.tasks.iter() {
+        if verbosity > 0 {
+            print_task_multiline(task, true);
+        } else {
+            print_task_oneline(task, true);
+        }
+    }
+}
+
+pub fn print_task_oneline(task: &task::Task, colorized: bool) {
+    let id = &task.id[0..9];
+    // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
+
+    let summary = task.summary.to_string();
+    let status = task.status.to_string();
+    // let details = task.details.to_string();
+    let blocked = if task.blocked_by.is_empty() {
+        "".to_string()
+    } else {
+        task
+            .blocked_by
+            .iter()
+            .map(|s| &s[..9])
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    if colorized {
+        let id = id.bright_green();
+        let summary = summary.bright_white();
+        let status = status.bright_black();
+        let blocked = blocked.bright_red();
+        // let details = details.bright_black();
+        println!("{}  {}  {}  {}", id, summary, status, blocked);
+    } else {
+        println!("{}  {}  {}  {}", id, summary, status, blocked);
+    }
+}
+
+pub fn print_task_multiline(task: &task::Task, colorized: bool) {
+    let id = &task.id[0..9];
+    // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
+
+    let summary = task.summary.to_string();
+    let status = task.status.to_string();
+    let details = task.details.to_string();
+    let blocked = if task.blocked_by.is_empty() {
+        "".to_string()
+    } else {
+        task
+            .blocked_by
+            .iter()
+            .map(|s| &s[..9])
+            .collect::<Vec<_>>()
+            .join(", ")
+    };
+
+    if colorized {
+        let id = id.bright_green();
+        let summary = summary.bright_white();
+        let status = status.bright_black();
+        let blocked = blocked.bright_red();
+        let details = details.bright_black();
+        println!("——————————————————————————————————————————————————————");
+        println!("summary: {}", summary);
+        println!("id: {}", id);
+        println!("status: {}", status);
+        println!("blocked by: {}", blocked);
+        println!("details: {}", details);
+    } else {
+        println!("——————————————————————————————————————————————————————");
+        println!("summary: {}", summary);
+        println!("id: {}", id);
+        println!("status: {}", status);
+        println!("blocked by: {}", blocked);
+        println!("details: {}", details);
+    }
+}
+
+
 fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8) -> Result<usize, Box<dyn Error>> {
-    task_list.print_list(verbosity);
+    print_task_list(task_list, verbosity);
     Ok(task_list.tasks.len())
 }
 
