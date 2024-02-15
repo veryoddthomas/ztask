@@ -1,13 +1,11 @@
 use chrono::{DateTime, Local};
+use serde::{Deserialize, Serialize};
+use std::collections::VecDeque;
+use std::env;
 use std::fs::File;
 use std::io::{self, Read, Write};
-
-use std::env;
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-use std::collections::VecDeque;
-
 use std::process::Command;
+use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum TaskStatus {
