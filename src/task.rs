@@ -1,5 +1,6 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
+use std::cmp::Ordering;
 use std::collections::VecDeque;
 use std::env;
 use std::fs::File;
@@ -7,7 +8,7 @@ use std::io::{self, Read, Write};
 use std::process::Command;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub enum TaskStatus {
     #[serde(rename = "active")]    Active,
     #[serde(rename = "backlog")]   Backlog,
@@ -29,15 +30,33 @@ impl std::fmt::Display for TaskStatus {
 }
 
 /// Task structure
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize, Clone, Eq, PartialEq)]
 pub struct Task {
     pub id: String,
     pub summary: String,
     pub details: String,
+    pub priority: u8,
     pub category: String,
     pub created_at: DateTime<Local>,
     pub status: TaskStatus,
     pub blocked_by: VecDeque<String>,
+}
+
+impl Ord for Task {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // In case of a priority tie we compare created_at - this step
+        // is necessary to make implementations of `PartialEq` and
+        // `Ord` consistent.
+        other.priority.cmp(&self.priority).reverse()
+            .then_with(|| self.created_at.cmp(&other.created_at))
+    }
+}
+
+// `PartialOrd` needs to be implemented as well.
+impl PartialOrd for Task {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 
 impl Task {
@@ -46,6 +65,7 @@ impl Task {
             id: Uuid::new_v4().simple().to_string(),
             summary,
             details: "".to_string(),
+            priority: 3,
             category,
             created_at: Local::now(),
             status: TaskStatus::Active,
@@ -56,6 +76,7 @@ impl Task {
 
     fn update_from(&mut self, other: &Task) {
         assert_eq!(self.id, other.id);
+        self.priority = other.priority;
         self.summary = other.summary.clone();
         self.details = other.details.clone();
         self.category = other.category.clone();

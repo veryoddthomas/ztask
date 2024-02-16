@@ -99,7 +99,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 
 /// Print all tasks
 pub fn print_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
-    for task in task_list.tasks.iter() {
+    let v = task_list.tasks.clone().into_sorted_vec();
+
+
+
+    // for task in task_list.tasks.iter() {
+    for task in v.iter() {
         if verbosity > 0 {
             print_task_multiline(task, true);
         } else {
@@ -112,6 +117,7 @@ pub fn print_task_oneline(task: &task::Task, colorized: bool) {
     let id = &task.id[0..9];
     // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
 
+    let priority = task.priority.to_string();
     let summary = task.summary.to_string();
     let status = task.status.to_string();
     // let details = task.details.to_string();
@@ -132,9 +138,9 @@ pub fn print_task_oneline(task: &task::Task, colorized: bool) {
         let status = status.bright_black();
         let blocked = blocked.bright_red();
         // let details = details.bright_black();
-        println!("{}  {}  {}  {}", id, summary, status, blocked);
+        println!("{}  {}  {:9}  {}  {}", id, priority, status, summary, blocked);
     } else {
-        println!("{}  {}  {}  {}", id, summary, status, blocked);
+        println!("{}  {}  {:9}  {}  {}", id, priority, status, summary, blocked);
     }
 }
 
@@ -142,6 +148,7 @@ pub fn print_task_multiline(task: &task::Task, colorized: bool) {
     let id = &task.id[0..9];
     // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
 
+    let priority = task.priority.to_string();
     let summary = task.summary.to_string();
     let status = task.status.to_string();
     let details = task.details.to_string();
@@ -165,6 +172,7 @@ pub fn print_task_multiline(task: &task::Task, colorized: bool) {
         println!("——————————————————————————————————————————————————————");
         println!("summary: {}", summary);
         println!("id: {}", id);
+        println!("priority: {}", priority);
         println!("status: {}", status);
         println!("blocked by: {}", blocked);
         println!("details: {}", details);
@@ -172,6 +180,7 @@ pub fn print_task_multiline(task: &task::Task, colorized: bool) {
         println!("——————————————————————————————————————————————————————");
         println!("summary: {}", summary);
         println!("id: {}", id);
+        println!("priority: {}", priority);
         println!("status: {}", status);
         println!("blocked by: {}", blocked);
         println!("details: {}", details);
@@ -202,8 +211,7 @@ fn process_del(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Res
     let prior_task_count = task_list.tasks.len();
     if task_ids.is_empty() {
         // Remove last task
-        let final_length = task_list.tasks.len().saturating_sub(1);  // remove last task
-        task_list.tasks.truncate(final_length);
+        task_list.tasks.pop();
     } else {
         // Remove selected tasks
         for id in task_ids {
@@ -355,7 +363,10 @@ mod tests {
     fn verify_delete_single() {
         let db = __create_temp_db(2);
         let task_list = tasklist::TaskList::new(db.clone());
-        let id = task_list.tasks.get(1).unwrap().id.clone();
+
+        let mut iter = task_list.tasks.iter().skip(1);
+        let id = iter.next().unwrap().id.clone();
+
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "del", &id]
         );
@@ -394,7 +405,10 @@ mod tests {
     fn verify_edit_single() {
         let db = __create_temp_db(2);
         let task_list = tasklist::TaskList::new(db.clone());
-        let id = task_list.tasks.get(1).unwrap().id.clone();
+
+        let mut iter = task_list.tasks.iter().skip(1);
+        let id = iter.next().unwrap().id.clone();
+
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "edit", &id]
         );
