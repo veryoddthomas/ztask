@@ -47,10 +47,7 @@ impl Ord for Task {
         // In case of a priority tie we compare created_at - this step
         // is necessary to make implementations of `PartialEq` and
         // `Ord` consistent.
-        // other.priority.cmp(&self.priority).reverse()
-        // .then_with(|| self.created_at.cmp(&other.created_at))
-
-        other.status.cmp(&self.status).reverse()
+        self.status.cmp(&other.status)
             .then_with(|| self.priority.cmp(&other.priority))
             .then_with(|| self.created_at.cmp(&other.created_at))
     }
