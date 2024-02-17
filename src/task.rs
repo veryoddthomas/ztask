@@ -8,7 +8,7 @@ use std::io::{self, Read, Write};
 use std::process::Command;
 use uuid::Uuid;
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum TaskStatus {
     #[serde(rename = "active")]    Active,
     #[serde(rename = "backlog")]   Backlog,
@@ -47,7 +47,11 @@ impl Ord for Task {
         // In case of a priority tie we compare created_at - this step
         // is necessary to make implementations of `PartialEq` and
         // `Ord` consistent.
-        other.priority.cmp(&self.priority).reverse()
+        // other.priority.cmp(&self.priority).reverse()
+        // .then_with(|| self.created_at.cmp(&other.created_at))
+
+        other.status.cmp(&self.status).reverse()
+            .then_with(|| self.priority.cmp(&other.priority))
             .then_with(|| self.created_at.cmp(&other.created_at))
     }
 }
