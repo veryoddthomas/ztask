@@ -13,8 +13,8 @@ pub enum TaskStatus {
     #[serde(rename = "active")]    Active,
     #[serde(rename = "backlog")]   Backlog,
     #[serde(rename = "blocked")]   Blocked,
-    #[serde(rename = "completed")] Completed,
     #[serde(rename = "sleeping")]  Sleeping,  // Would Snoozed be better?
+    #[serde(rename = "completed")] Completed,
 }
 
 impl std::fmt::Display for TaskStatus {

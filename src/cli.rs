@@ -1,5 +1,5 @@
 use std::error::Error;
-use crate::task;
+use crate::task::{Task, TaskStatus};
 use crate::tasklist;
 use clap::{Parser, Subcommand, ArgAction};
 use colored::Colorize;
@@ -99,12 +99,16 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 
 /// Print all tasks
 pub fn print_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
-    let v = task_list.tasks.clone().into_sorted_vec();
-
-
+    let task_list_copy = task_list.tasks.clone().into_sorted_vec();
+    let v =
+        task_list_copy
+        .iter()
+        .filter(|task| task.status != TaskStatus::Completed)
+        .filter(|task| task.status != TaskStatus::Sleeping)
+        ;
 
     // for task in task_list.tasks.iter() {
-    for task in v.iter() {
+    for task in v {
         if verbosity > 0 {
             print_task_multiline(task, true);
         } else {
@@ -113,7 +117,7 @@ pub fn print_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
     }
 }
 
-pub fn print_task_oneline(task: &task::Task, colorized: bool) {
+pub fn print_task_oneline(task: &Task, colorized: bool) {
     let id = &task.id[0..9];
     // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
 
@@ -144,7 +148,7 @@ pub fn print_task_oneline(task: &task::Task, colorized: bool) {
     }
 }
 
-pub fn print_task_multiline(task: &task::Task, colorized: bool) {
+pub fn print_task_multiline(task: &Task, colorized: bool) {
     let id = &task.id[0..9];
     // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
 
@@ -226,7 +230,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
     if new_task_names.is_empty() {
         // Create default task with default name
         let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
-        let new_task = task::Task::new(default_task_name, "quick".to_string());
+        let new_task = Task::new(default_task_name, "quick".to_string());
         created_task_ids.push(new_task.id.clone());
         task_list.add_task(new_task);
     } else {
@@ -238,21 +242,21 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
                 // All task names are single word
                 // Create single task with those task names
                 let name = new_task_names.join(" ");
-                let new_task = task::Task::new(name, "quick".to_string());
+                let new_task = Task::new(name, "quick".to_string());
                 created_task_ids.push(new_task.id.clone());
                 task_list.add_task(new_task);
             } else {
                 // Some task names are multi-word
                 // Create multiple tasks with those task names
                 for name in new_task_names {
-                    let new_task = task::Task::new(name, "quick".to_string());
+                    let new_task = Task::new(name, "quick".to_string());
                     created_task_ids.push(new_task.id.clone());
                     task_list.add_task(new_task);
                 }
             }
         } else {
             // Create single task with that task name
-            let new_task = task::Task::new(new_task_names[0].clone(), "quick".to_string());
+            let new_task = Task::new(new_task_names[0].clone(), "quick".to_string());
             created_task_ids.push(new_task.id.clone());
             task_list.add_task(new_task);
         }
