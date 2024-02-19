@@ -102,8 +102,10 @@ pub fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8
     show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
     show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
     show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
-    show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
-    show_list("Completed Tasks", TaskStatus::Completed, task_list, verbosity);
+    if verbosity > 0 {
+        show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
+        show_list("Completed Tasks", TaskStatus::Completed, task_list, verbosity);
+    }
 
     fn show_list(heading: &str, status: TaskStatus, task_list: &tasklist::TaskList, _verbosity: u8) {
         let mut tasks = task_list.tasks.clone();
@@ -111,31 +113,49 @@ pub fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8
 
         if !tasks.is_empty() {
             println!("{}:", heading.bright_white());
+            println!();
             for task in tasks.into_sorted_vec() { print_task_oneline(&task); }
+            println!();
         }
     }
 
     pub fn print_task_oneline(task: &Task) {
-        let id = &task.id[0..7];
+        let show_date = true;
         // See specifiers at https://docs.rs/chrono/latest/chrono/format/strftime/index.html
-        let created = task.created_at.format("%F@%T%.3f").to_string();
-        let priority = task.priority.to_string();
+        // "%F@%T%.3f" example: 2024-02-15@22:38:39.439
+
+        let id = &task.id[..9];
+        let id = match task.status {
+            TaskStatus::Active => id.bright_green(),
+            TaskStatus::Backlog => id.bright_blue(),
+            TaskStatus::Blocked => id.bright_red(),
+            TaskStatus::Sleeping => id.bright_yellow(),
+            TaskStatus::Completed => id.bright_black(),
+        };
+        let priority = task.priority.to_string().white();
+
+        print!("  {}  {}", id, priority);
+
+        if show_date {
+            print!("  {}", task.created_at.format("%F"));
+        }
+
         let summary = task.summary.to_string();
         let blocked = if task.blocked_by.is_empty() {
-            "".to_string()
+            "".bright_red()
         } else {
-            task
-                .blocked_by
-                .iter()
-                .map(|s| &s[..9])
-                .collect::<Vec<_>>()
-                .join(", ")
+            format!("[{}]",
+                task.blocked_by
+                    .iter()
+                    .map(|s| &s[..9])
+                    .collect::<Vec<_>>()
+                    .join(", ")).bright_red()
         };
 
-        let id = id.bright_green();
-        let blocked = blocked.bright_red();
-        println!("  {}  {}  {}  {}  {}", id, priority, created, summary, blocked);
+        print!("  {}  {}", summary, blocked);
+        println!();
     }
+
 }
 
 
