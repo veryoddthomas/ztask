@@ -43,20 +43,22 @@ pub struct Task {
 }
 
 impl Ord for Task {
+    // Note, we have to reverse the ordering since the BinaryHeap is a max-heap
+    // (descending order) and we want to sort in ascending order.
+
     fn cmp(&self, other: &Self) -> Ordering {
         // In case of a priority tie we compare created_at - this step
         // is necessary to make implementations of `PartialEq` and
         // `Ord` consistent.
-        self.status.cmp(&other.status)
-            .then_with(|| self.priority.cmp(&other.priority))
-            .then_with(|| self.created_at.cmp(&other.created_at))
+        other.status.cmp(&self.status)
+            .then_with(|| other.priority.cmp(&self.priority))
+            .then_with(|| other.created_at.cmp(&self.created_at))
     }
 }
 
-// `PartialOrd` needs to be implemented as well.
 impl PartialOrd for Task {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+        Some(other.cmp(self))
     }
 }
 

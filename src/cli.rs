@@ -98,102 +98,83 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 }
 
 /// Print all tasks
-pub fn print_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
-    let task_list_copy = task_list.tasks.clone().into_sorted_vec();
-    let v =
-        task_list_copy
-        .iter()
-        .filter(|task| task.status != TaskStatus::Completed)
-        .filter(|task| task.status != TaskStatus::Sleeping)
-        ;
+pub fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
+    show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
+    show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
+    show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
+    show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
+    show_list("Completed Tasks", TaskStatus::Completed, task_list, verbosity);
 
-    // for task in task_list.tasks.iter() {
-    for task in v {
-        if verbosity > 0 {
-            print_task_multiline(task, true);
-        } else {
-            print_task_oneline(task, true);
+    fn show_list(heading: &str, status: TaskStatus, task_list: &tasklist::TaskList, _verbosity: u8) {
+        let mut tasks = task_list.tasks.clone();
+        tasks.retain(|task| task.status == status);
+
+        if !tasks.is_empty() {
+            println!("{}:", heading.bright_white());
+            for task in tasks.into_sorted_vec() { print_task_oneline(&task); }
         }
     }
-}
 
-pub fn print_task_oneline(task: &Task, colorized: bool) {
-    let id = &task.id[0..9];
-    // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
+    pub fn print_task_oneline(task: &Task) {
+        let id = &task.id[0..7];
+        // See specifiers at https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+        let created = task.created_at.format("%F@%T%.3f").to_string();
+        let priority = task.priority.to_string();
+        let summary = task.summary.to_string();
+        let blocked = if task.blocked_by.is_empty() {
+            "".to_string()
+        } else {
+            task
+                .blocked_by
+                .iter()
+                .map(|s| &s[..9])
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
 
-    let priority = task.priority.to_string();
-    let summary = task.summary.to_string();
-    let status = task.status.to_string();
-    // let details = task.details.to_string();
-    let blocked = if task.blocked_by.is_empty() {
-        "".to_string()
-    } else {
-        task
-            .blocked_by
-            .iter()
-            .map(|s| &s[..9])
-            .collect::<Vec<_>>()
-            .join(", ")
-    };
-
-    if colorized {
         let id = id.bright_green();
-        let summary = summary.bright_white();
-        let status = status.bright_black();
         let blocked = blocked.bright_red();
-        // let details = details.bright_black();
-        println!("{}  {}  {:9}  {}  {}", id, priority, status, summary, blocked);
-    } else {
-        println!("{}  {}  {:9}  {}  {}", id, priority, status, summary, blocked);
+        println!("  {}  {}  {}  {}  {}", id, priority, created, summary, blocked);
     }
 }
 
-pub fn print_task_multiline(task: &Task, colorized: bool) {
-    let id = &task.id[0..9];
-    // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
 
-    let priority = task.priority.to_string();
-    let summary = task.summary.to_string();
-    let status = task.status.to_string();
-    let details = task.details.to_string();
-    let blocked = if task.blocked_by.is_empty() {
-        "".to_string()
-    } else {
-        task
-            .blocked_by
-            .iter()
-            .map(|s| &s[..9])
-            .collect::<Vec<_>>()
-            .join(", ")
-    };
+// pub fn print_task_detailed(task: &Task) {
+//     let id = &task.id[0..9];
+//     // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
 
-    if colorized {
-        let id = id.bright_green();
-        let summary = summary.bright_white();
-        let status = status.bright_black();
-        let blocked = blocked.bright_red();
-        let details = details.bright_black();
-        println!("——————————————————————————————————————————————————————");
-        println!("summary: {}", summary);
-        println!("id: {}", id);
-        println!("priority: {}", priority);
-        println!("status: {}", status);
-        println!("blocked by: {}", blocked);
-        println!("details: {}", details);
-    } else {
-        println!("——————————————————————————————————————————————————————");
-        println!("summary: {}", summary);
-        println!("id: {}", id);
-        println!("priority: {}", priority);
-        println!("status: {}", status);
-        println!("blocked by: {}", blocked);
-        println!("details: {}", details);
-    }
-}
+//     let priority = task.priority.to_string();
+//     let summary = task.summary.to_string();
+//     let status = task.status.to_string();
+//     let details = task.details.to_string();
+//     let blocked = if task.blocked_by.is_empty() {
+//         "".to_string()
+//     } else {
+//         task
+//             .blocked_by
+//             .iter()
+//             .map(|s| &s[..9])
+//             .collect::<Vec<_>>()
+//             .join(", ")
+//     };
+
+//     let id = id.bright_green();
+//     let summary = summary.bright_white();
+//     let status = status.bright_black();
+//     let blocked = blocked.bright_red();
+//     let details = details.bright_black();
+//     println!("——————————————————————————————————————————————————————");
+//     println!("summary: {}", summary);
+//     println!("id: {}", id);
+//     println!("priority: {}", priority);
+//     println!("status: {}", status);
+//     println!("blocked by: {}", blocked);
+//     println!("details: {}", details);
+// }
 
 
 fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8) -> Result<usize, Box<dyn Error>> {
-    print_task_list(task_list, verbosity);
+    print_categorized_task_list(task_list, verbosity);
     Ok(task_list.tasks.len())
 }
 
