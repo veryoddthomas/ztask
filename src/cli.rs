@@ -27,28 +27,24 @@ pub struct Arguments {
 /// Subcommands for the application
 #[derive(Subcommand, Debug)]
 enum Command {
-
     /// List existing tasks
     List {
         /// Increase logging verbosity
         #[clap(short, long, action=ArgAction::Count)]
         verbose: u8,
     },
-
     /// Add one or more new tasks
     Add {
         /// Name of task(s) to add
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_names: Option<Vec<String>>,
     },
-
     /// Del one or more tasks
     Del {
         /// Id(s) of task(s) to delete
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
-
     /// Edit one or more tasks
     Edit {
         /// Id(s) of task(s) to edit
@@ -59,10 +55,6 @@ enum Command {
 
 pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     let args = arg_overrides.unwrap_or(Arguments::parse());
-
-    // // Print arguments for debugging
-    // println!("{:?}", args);
-
     let mut task_list = tasklist::TaskList::new(args.db);
 
     if let Some(subcmd) = args.command {
@@ -98,7 +90,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 }
 
 /// Print all tasks
-pub fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
+fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
     show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
     show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
     show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
@@ -119,7 +111,7 @@ pub fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8
         }
     }
 
-    pub fn print_task_oneline(task: &Task) {
+    fn print_task_oneline(task: &Task) {
         let show_date = true;
         // See specifiers at https://docs.rs/chrono/latest/chrono/format/strftime/index.html
         // "%F@%T%.3f" example: 2024-02-15@22:38:39.439
@@ -286,13 +278,11 @@ mod tests {
     #[test]
     fn verify_command_list() {
         let db = __create_temp_db(5);
-
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "list"]
         );
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
-
         __destroy_temp_db(db);
     }
 
@@ -301,41 +291,35 @@ mod tests {
     #[test]
     fn verify_add_default() {
         let db = __create_temp_db(0);
-
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "add"]
         );
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
-
         __destroy_temp_db(db);
     }
 
     #[test]
     fn verify_add_single() {
         let db = __create_temp_db(0);
-
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "add", "test task"]
         );
         // Should create 1 task with name "test task"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
-
         __destroy_temp_db(db);
     }
 
     #[test]
     fn verify_add_multiple() {
         let db = __create_temp_db(0);
-
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "add", "test task #1", "test task #2", "task3", "task4"]
         );
         // Should create 4 tasks with names "test task #1", "test task #2", "task3", "task4"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
-
         __destroy_temp_db(db);
     }
 
@@ -368,10 +352,8 @@ mod tests {
     fn verify_delete_single() {
         let db = __create_temp_db(2);
         let task_list = tasklist::TaskList::new(db.clone());
-
         let mut iter = task_list.tasks.iter().skip(1);
         let id = iter.next().unwrap().id.clone();
-
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "del", &id]
         );
@@ -410,10 +392,8 @@ mod tests {
     fn verify_edit_single() {
         let db = __create_temp_db(2);
         let task_list = tasklist::TaskList::new(db.clone());
-
         let mut iter = task_list.tasks.iter().skip(1);
         let id = iter.next().unwrap().id.clone();
-
         let args: Arguments = Arguments::parse_from(
             ["ztask", "--db", &db, "-v", "edit", &id]
         );
