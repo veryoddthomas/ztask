@@ -23,12 +23,12 @@ llvm-cov show \
     ) \
     --instr-profile=coverage/json5format.profdata \
     --summary-only \
-    --show-instantiations --show-line-counts-or-regions \
     --Xdemangler=rustfilt \
     --ignore-filename-regex='/.cargo/registry' \
     --ignore-filename-regex='library/std/src' \
     --ignore-filename-regex='/main.rs' \
-    --format=html --output-dir=coverage
+    --format=html --output-dir=coverage \
+    # --show-instantiations --show-line-counts-or-regions \
     # and/or other options
 
 wslview coverage/index.html

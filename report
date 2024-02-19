@@ -23,5 +23,8 @@ llvm-cov report \
     ) \
     --instr-profile=coverage/json5format.profdata \
     --summary-only \
+    --Xdemangler=rustfilt \
     --ignore-filename-regex='/.cargo/registry' \
+    --ignore-filename-regex='library/std/src' \
+    --ignore-filename-regex='/main.rs' \
     # and/or other options
