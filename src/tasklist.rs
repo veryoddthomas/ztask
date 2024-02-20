@@ -245,7 +245,7 @@ pub mod tests {
 
         let mut task_list = TaskList::new(db.clone());
         for i in 0..initial_task_count {
-            task_list.add_task(Task::new(format!("test task {i}").to_string(), "quick".to_string()));
+            task_list.add_task(Task::new(format!("test task {i}").to_string(), "quick".to_string(), true));
         }
         db
     }

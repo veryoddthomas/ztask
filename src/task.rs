@@ -47,6 +47,10 @@ impl Ord for Task {
     // (descending order) and we want to sort in ascending order.
 
     fn cmp(&self, other: &Self) -> Ordering {
+        if self.status == TaskStatus::Active && other.status == TaskStatus::Active {
+            // These should be sorted in descending order by date (only)
+            return self.created_at.cmp(&other.created_at);
+        }
         // In case of a priority tie we compare created_at - this step
         // is necessary to make implementations of `PartialEq` and
         // `Ord` consistent.
@@ -63,7 +67,7 @@ impl PartialOrd for Task {
 }
 
 impl Task {
-    pub fn new(summary: String, category: String) -> Self {
+    pub fn new(summary: String, category: String, is_interrupt: bool) -> Self {
         Task {
             id: Uuid::new_v4().simple().to_string(),
             summary,
@@ -71,7 +75,10 @@ impl Task {
             priority: 3,
             category,
             created_at: Local::now(),
-            status: TaskStatus::Active,
+            status: match is_interrupt {
+                true => TaskStatus::Active,
+                false => TaskStatus::Backlog,
+            },
             // blocked_by: VecDeque::from(["9d8607f24".to_string(), "c1ed178b5".to_string()]),
             blocked_by: VecDeque::new(),
         }
@@ -160,7 +167,7 @@ pub mod tests {
     /// Verify default task settings
     #[test]
     fn check_task_defaults() {
-        let task = Task::new("Get stuff done".to_string(), "Category".to_string());
+        let task = Task::new("Get stuff done".to_string(), "Category".to_string(), true);
 
         assert_eq!(task.summary, "Get stuff done".to_string());
         assert_eq!(task.category, "Category".to_string());

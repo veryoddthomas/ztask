@@ -41,6 +41,10 @@ enum Command {
         /// Name of task(s) to add
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_names: Option<Vec<String>>,
+
+        /// Indicate that the task(s) should be added as active (interrupt(s))
+        #[clap(short, action=ArgAction::SetTrue)]
+        is_interrupt: bool,
     },
     /// Del one or more tasks
     Del {
@@ -68,11 +72,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
-            Command::Add { task_names } => match process_add(&mut task_list, task_names.unwrap_or_default()) {
-                Ok(ids) => if args.verbose > 0 {
-                    println!("created task(s) {:?}", ids)
-                },
-                Err(e) => eprintln!("error in processing : {}", e),
+            Command::Add { task_names, is_interrupt } =>
+                match process_add(&mut task_list, task_names.unwrap_or_default(), is_interrupt) {
+                    Ok(ids) => if args.verbose > 0 {
+                        println!("created task(s) {:?}", ids)
+                    },
+                    Err(e) => eprintln!("error in processing : {}", e),
             },
             Command::Del { task_ids } => match process_del(&mut task_list, task_ids.unwrap_or_default()) {
                 Ok(c) => if args.verbose > 0 {
@@ -219,12 +224,12 @@ fn process_del(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Res
     Ok(prior_task_count - task_list.tasks.len())
 }
 
-fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
+fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, is_interrupt: bool) -> Result<Vec<String>, Box<dyn Error>> {
     let mut created_task_ids: Vec<String> = Vec::new();
     if new_task_names.is_empty() {
         // Create default task with default name
         let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
-        let new_task = Task::new(default_task_name, "quick".to_string());
+        let new_task = Task::new(default_task_name, "quick".to_string(), is_interrupt);
         created_task_ids.push(new_task.id.clone());
         print_task_oneline(&new_task);
         task_list.add_task(new_task);
@@ -237,7 +242,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
                 // All task names are single word
                 // Create single task with those task names
                 let name = new_task_names.join(" ");
-                let new_task = Task::new(name, "quick".to_string());
+                let new_task = Task::new(name, "quick".to_string(), is_interrupt);
                 created_task_ids.push(new_task.id.clone());
                 print_task_oneline(&new_task);
                 task_list.add_task(new_task);
@@ -245,7 +250,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
                 // Some task names are multi-word
                 // Create multiple tasks with those task names
                 for name in new_task_names {
-                    let new_task = Task::new(name, "quick".to_string());
+                    let new_task = Task::new(name, "quick".to_string(), is_interrupt);
                     created_task_ids.push(new_task.id.clone());
                     print_task_oneline(&new_task);
                     task_list.add_task(new_task);
@@ -253,7 +258,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
             }
         } else {
             // Create single task with that task name
-            let new_task = Task::new(new_task_names[0].clone(), "quick".to_string());
+            let new_task = Task::new(new_task_names[0].clone(), "quick".to_string(), is_interrupt);
             created_task_ids.push(new_task.id.clone());
             print_task_oneline(&new_task);
             task_list.add_task(new_task);
