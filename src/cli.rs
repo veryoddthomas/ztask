@@ -2,7 +2,7 @@ use std::error::Error;
 use crate::task::{Task, TaskStatus};
 use crate::tasklist;
 use clap::{Parser, Subcommand, ArgAction};
-use colored::Colorize;
+use colored::{ColoredString, Colorize};
 
 /// Default database path
 const DB_PATH: &str = "./data/db.json";
@@ -115,14 +115,52 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
     fn show_list(heading: &str, status: TaskStatus, task_list: &tasklist::TaskList, _verbosity: u8) {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == status);
+        let mut tasks = tasks.into_sorted_vec();
 
         if !tasks.is_empty() {
             println!("{}:", heading.bright_white());
-            // println!();
-            for task in tasks.into_sorted_vec() { print_task_oneline(&task); }
-            // println!();
+
+            let task = tasks.remove(0);
+            print_task_oneline(&task);
+        }
+
+        if !tasks.is_empty() {
+            // println!("{}:", heading.bright_white());
+            if status == TaskStatus::Active {  // These are interrupted tasks
+                for task in tasks {
+                    print_task_oneline_with_format_override(
+                        &task, |s| s.bright_black());
+                }
+            } else {
+                for task in tasks { print_task_oneline(&task); }
+            }
         }
     }
+}
+
+// fn red(s: &str) -> ColoredString { s.red() }
+
+fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> ColoredString) {
+    let id = set_color(&task.id[..9]);
+    let priority = set_color(&task.priority.to_string());
+
+    print!("  {}  {}", id, priority);
+    print!("  {}", set_color(&task.created_at.format("%F").to_string()));
+
+    let summary = set_color(&task.summary.to_string());
+    let blocked = if task.blocked_by.is_empty() {
+        set_color("")  // bright_red()
+    } else {
+        set_color(&format!("[{}]",
+            task.blocked_by
+                    .iter()
+                    .map(|s| &s[..9])
+                    .collect::<Vec<_>>()
+                    .join(", ")))
+    };
+
+    print!("  {}  {}", summary, blocked);
+    println!();
 }
 
 fn print_task_oneline(task: &Task) {
