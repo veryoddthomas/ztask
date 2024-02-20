@@ -89,6 +89,11 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8) -> Result<usize, Box<dyn Error>> {
+    print_categorized_task_list(task_list, verbosity);
+    Ok(task_list.tasks.len())
+}
+
 /// Print all tasks
 fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
     show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
@@ -105,51 +110,49 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
 
         if !tasks.is_empty() {
             println!("{}:", heading.bright_white());
-            println!();
+            // println!();
             for task in tasks.into_sorted_vec() { print_task_oneline(&task); }
-            println!();
+            // println!();
         }
     }
-
-    fn print_task_oneline(task: &Task) {
-        let show_date = true;
-        // See specifiers at https://docs.rs/chrono/latest/chrono/format/strftime/index.html
-        // "%F@%T%.3f" example: 2024-02-15@22:38:39.439
-
-        let id = &task.id[..9];
-        let id = match task.status {
-            TaskStatus::Active => id.bright_green(),
-            TaskStatus::Backlog => id.bright_blue(),
-            TaskStatus::Blocked => id.bright_red(),
-            TaskStatus::Sleeping => id.bright_yellow(),
-            TaskStatus::Completed => id.bright_black(),
-        };
-        let priority = task.priority.to_string().white();
-
-        print!("  {}  {}", id, priority);
-
-        if show_date {
-            print!("  {}", task.created_at.format("%F"));
-        }
-
-        let summary = task.summary.to_string();
-        let blocked = if task.blocked_by.is_empty() {
-            "".bright_red()
-        } else {
-            format!("[{}]",
-                task.blocked_by
-                    .iter()
-                    .map(|s| &s[..9])
-                    .collect::<Vec<_>>()
-                    .join(", ")).bright_red()
-        };
-
-        print!("  {}  {}", summary, blocked);
-        println!();
-    }
-
 }
 
+fn print_task_oneline(task: &Task) {
+    let show_date = true;
+    // See specifiers at https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+    // "%F@%T%.3f" example: 2024-02-15@22:38:39.439
+
+    let id = &task.id[..9];
+    let id = match task.status {
+        TaskStatus::Active => id.bright_green(),
+        TaskStatus::Backlog => id.white(),
+        TaskStatus::Blocked => id.truecolor(238,105,105),  // bright_red(),
+        TaskStatus::Sleeping => id.bright_black(),
+        TaskStatus::Completed => id.bright_black(),
+    };
+    let priority = task.priority.to_string().white();
+
+    print!("  {}  {}", id, priority);
+
+    if show_date {
+        print!("  {}", task.created_at.format("%F"));
+    }
+
+    let summary = task.summary.to_string();
+    let blocked = if task.blocked_by.is_empty() {
+        "".truecolor(238,105,105)  // bright_red()
+    } else {
+        format!("[{}]",
+            task.blocked_by
+                .iter()
+                .map(|s| &s[..9])
+                .collect::<Vec<_>>()
+                .join(", ")).truecolor(238,105,105)  // bright_red()
+    };
+
+    print!("  {}  {}", summary, blocked);
+    println!();
+}
 
 // pub fn print_task_detailed(task: &Task) {
 //     let id = &task.id[0..9];
@@ -184,11 +187,6 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
 //     println!("details: {}", details);
 // }
 
-
-fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8) -> Result<usize, Box<dyn Error>> {
-    print_categorized_task_list(task_list, verbosity);
-    Ok(task_list.tasks.len())
-}
 
 fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
     let mut edit_count = 0;
@@ -225,6 +223,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
         let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
         let new_task = Task::new(default_task_name, "quick".to_string());
         created_task_ids.push(new_task.id.clone());
+        print_task_oneline(&new_task);
         task_list.add_task(new_task);
     } else {
         // Create new tasks with provided names
@@ -237,6 +236,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
                 let name = new_task_names.join(" ");
                 let new_task = Task::new(name, "quick".to_string());
                 created_task_ids.push(new_task.id.clone());
+                print_task_oneline(&new_task);
                 task_list.add_task(new_task);
             } else {
                 // Some task names are multi-word
@@ -244,6 +244,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
                 for name in new_task_names {
                     let new_task = Task::new(name, "quick".to_string());
                     created_task_ids.push(new_task.id.clone());
+                    print_task_oneline(&new_task);
                     task_list.add_task(new_task);
                 }
             }
@@ -251,6 +252,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>) 
             // Create single task with that task name
             let new_task = Task::new(new_task_names[0].clone(), "quick".to_string());
             created_task_ids.push(new_task.id.clone());
+            print_task_oneline(&new_task);
             task_list.add_task(new_task);
         }
     }

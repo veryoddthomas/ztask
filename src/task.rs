@@ -130,7 +130,7 @@ impl Task {
                 .arg(file_path)
                 .status()
                 .expect("Failed to open the editor");
-            }
+        }
 
         // Reopen the temporary file for reading
         let file_path = temp_file.path();
