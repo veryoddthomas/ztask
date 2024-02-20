@@ -1,7 +1,7 @@
 use chrono::{DateTime, Local};
 use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
-use std::collections::VecDeque;
+use std::collections::BTreeSet;
 use std::env;
 use std::fs::File;
 use std::io::{self, Read, Write};
@@ -39,7 +39,7 @@ pub struct Task {
     pub category: String,
     pub created_at: DateTime<Local>,
     pub status: TaskStatus,
-    pub blocked_by: VecDeque<String>,
+    pub blocked_by: BTreeSet<String>,
 }
 
 impl Ord for Task {
@@ -80,7 +80,7 @@ impl Task {
                 false => TaskStatus::Backlog,
             },
             // blocked_by: VecDeque::from(["9d8607f24".to_string(), "c1ed178b5".to_string()]),
-            blocked_by: VecDeque::new(),
+            blocked_by: BTreeSet::new(),
         }
     }
 
@@ -93,6 +93,10 @@ impl Task {
         self.status = other.status.clone();
         self.blocked_by = other.blocked_by.clone();
     }
+
+    // fn block(&mut self, blocked_by: &BTreeSet<String>) {
+    //     self.blocked_by.append(&mut blocked_by.clone());
+    // }
 
     // pub fn to_string(&self) -> String {
     //     let id = &self.id[0..9];
