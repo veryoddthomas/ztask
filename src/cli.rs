@@ -22,6 +22,9 @@ pub struct Arguments {
     /// Increase logging verbosity
     #[clap(short, long, action=ArgAction::Count)]
     verbose: u8,
+
+    #[clap(short='?', action=ArgAction::Help, help="Print help (alias for --help)")]
+    help_short: Option<bool>,
 }
 
 /// Subcommands for the application
