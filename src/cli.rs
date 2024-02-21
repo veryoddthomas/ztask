@@ -35,10 +35,6 @@ enum Command {
         /// Increase logging verbosity
         #[clap(short, long, action=ArgAction::Count)]
         verbose: u8,
-
-        /// show all tasks
-        #[clap(short='a', long, action=ArgAction::SetTrue)]
-        show_all: bool,
     },
     /// Add one or more new tasks
     Add {
@@ -76,7 +72,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 
     if let Some(subcmd) = args.command {
         match subcmd {
-            Command::List { verbose , show_all } => match process_list(&mut task_list, std::cmp::max(args.verbose, verbose), show_all) {
+            Command::List { verbose } => match process_list(&mut task_list, std::cmp::max(args.verbose, verbose), true) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task(s) found", c)
                 },
