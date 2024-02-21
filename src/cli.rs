@@ -108,6 +108,14 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 Err(e) => eprintln!("error in processing : {}", e),
             },
         }
+    } else {
+        // No subcommand, so just list the active task
+        match process_list(&mut task_list, args.verbose, false) {
+            Ok(c) => if args.verbose > 0 {
+                println!("{} task(s) found", c)
+            },
+            Err(e) => eprintln!("error in processing : {}", e),
+        }
     }
 
     Ok(())
