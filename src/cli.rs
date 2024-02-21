@@ -107,9 +107,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     } else {
         // No subcommand, so just list the active task
         match process_list(&mut task_list, args.verbose, false) {
-            Ok(c) => if args.verbose > 0 {
-                println!("{} task(s) found", c)
-            },
+            Ok(_) => (),
             Err(e) => eprintln!("error in processing : {}", e),
         }
     }
@@ -212,14 +210,14 @@ fn print_task_oneline(task: &Task, show_status: bool) {
         TaskStatus::Sleeping => id.bright_black(),
         TaskStatus::Completed => id.bright_black(),
     };
-    let priority = task.priority.to_string().white();
+    let priority = task.priority.to_string().bright_black();
 
     print!("  {}", id);
     print!("  {}", priority);
-    if show_status { print!("  {}", task.status); }
-    if show_date { print!("  {}", task.created_at.format("%F")); }
+    if show_status { print!("  {}", task.status.to_string().bright_black()); }
+    if show_date { print!("  {}", task.created_at.format("%F").to_string().bright_black()); }
 
-    let summary = task.summary.to_string();
+    // let summary = task.summary.to_string().bright_black();
     let blocked = if task.blocked_by.is_empty() {
         "".truecolor(238,105,105)  // bright_red()
     } else {
@@ -231,33 +229,34 @@ fn print_task_oneline(task: &Task, show_status: bool) {
                 .join(", ")).truecolor(238,105,105)  // bright_red()
     };
 
-    print!("  {}  {}", summary, blocked);
+    print!("  {}  {}", task.summary.to_string().white(), blocked);
     println!();
 }
 
 pub fn print_task_detailed(task: &Task) {
     let blocked = if task.blocked_by.is_empty() {
-        "".to_string().bright_green()
+        "".to_string().truecolor(26, 126, 165)
     } else {
         task
             .blocked_by
             .iter()
             .map(|s| &s[..9])
             .collect::<Vec<_>>()
-            .join(", ").bright_green()
+            .join(", ").truecolor(26, 126, 165)
     };
 
-    println!("  {}:    {}", "summary".bright_white(), task.summary.to_string().bright_white());
-    println!("  {}:         {}", "id".bright_white(), &task.id[0..9].to_string().bright_green());
-    println!("  {}:   {}", "priority".bright_white(), task.priority.to_string().bright_green());
-    println!("  {}:     {}", "status".bright_white(), task.status.to_string().bright_green());
-    println!("  {}:    {}", "created".bright_white(), task.created_at.format("%F %T").to_string().bright_green());
+    let width = 11;
+    println!("  {:width$} {}", "summary:", task.summary.to_string().truecolor(40, 194, 254));
+    println!("  {:width$} {}", "id:", &task.id[0..9].to_string().truecolor(0x1a, 0x7e, 0xa5));
+    println!("  {:width$} {}", "priority:", task.priority.to_string().truecolor(0x1a, 0x7e, 0xa5));
+    println!("  {:width$} {}", "status:", task.status.to_string().truecolor(0x1a, 0x7e, 0xa5));
+    println!("  {:width$} {}", "created:", task.created_at.format("%F %T").to_string().truecolor(0x1a, 0x7e, 0xa5));
     if task.status == TaskStatus::Blocked {
-        println!("  {}: {}", "blocked by".bright_white(), blocked);
+        println!("  {:width$} {}", "blocked by:".bright_white(), blocked);
     }
     if !task.details.is_empty() {
-        println!("  {}:", "details".bright_white());
-        println!("  {}", task.details.to_string().bright_green());
+        println!("  {}", "details:".bright_white());
+        println!("  {}", task.details.to_string().truecolor(0x1a, 0x7e, 0xa5));
     }
 }
 
