@@ -125,7 +125,7 @@ fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8, show_all: boo
         if verbosity > 0 {
             print_task_detailed(&task);
         } else {
-            print_task_oneline(&task);
+            print_task_oneline(&task, true);
         }
     }
     Ok(task_list.tasks.len())
@@ -136,10 +136,8 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
     show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
     show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
     show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
-    if verbosity > 0 {
-        show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
-        show_list("Completed Tasks", TaskStatus::Completed, task_list, verbosity);
-    }
+    show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
+    show_list("Completed Tasks", TaskStatus::Completed, task_list, verbosity);
 
     fn show_list(heading: &str, status: TaskStatus, task_list: &tasklist::TaskList, _verbosity: u8) {
         let mut tasks = task_list.tasks.clone();
@@ -152,7 +150,7 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
             if status == TaskStatus::Active {
                 // Print the first active task normally
                 let task = tasks.remove(0);
-                print_task_oneline(&task);
+                print_task_oneline(&task, false);
             }
         }
         let fn_format = match status {
@@ -197,7 +195,7 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
     println!();
 }
 
-fn print_task_oneline(task: &Task) {
+fn print_task_oneline(task: &Task, show_status: bool) {
     let show_date = true;
     // See specifiers at https://docs.rs/chrono/latest/chrono/format/strftime/index.html
     // "%F@%T%.3f" example: 2024-02-15@22:38:39.439
@@ -212,11 +210,10 @@ fn print_task_oneline(task: &Task) {
     };
     let priority = task.priority.to_string().white();
 
-    print!("  {}  {}", id, priority);
-
-    if show_date {
-        print!("  {}", task.created_at.format("%F"));
-    }
+    print!("  {}", id);
+    print!("  {}", priority);
+    if show_status { print!("  {}", task.status); }
+    if show_date { print!("  {}", task.created_at.format("%F")); }
 
     let summary = task.summary.to_string();
     let blocked = if task.blocked_by.is_empty() {
@@ -313,7 +310,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, 
         let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
         let new_task = Task::new(default_task_name, "quick".to_string(), is_interrupt);
         created_task_ids.push(new_task.id.clone());
-        print_task_oneline(&new_task);
+        print_task_oneline(&new_task, true);
         task_list.add_task(new_task);
     } else {
         // Create new tasks with provided names
@@ -326,7 +323,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, 
                 let name = new_task_names.join(" ");
                 let new_task = Task::new(name, "quick".to_string(), is_interrupt);
                 created_task_ids.push(new_task.id.clone());
-                print_task_oneline(&new_task);
+                print_task_oneline(&new_task, true);
                 task_list.add_task(new_task);
             } else {
                 // Some task names are multi-word
@@ -334,7 +331,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, 
                 for name in new_task_names {
                     let new_task = Task::new(name, "quick".to_string(), is_interrupt);
                     created_task_ids.push(new_task.id.clone());
-                    print_task_oneline(&new_task);
+                    print_task_oneline(&new_task, true);
                     task_list.add_task(new_task);
                 }
             }
@@ -342,7 +339,7 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, 
             // Create single task with that task name
             let new_task = Task::new(new_task_names[0].clone(), "quick".to_string(), is_interrupt);
             created_task_ids.push(new_task.id.clone());
-            print_task_oneline(&new_task);
+            print_task_oneline(&new_task, true);
             task_list.add_task(new_task);
         }
     }
