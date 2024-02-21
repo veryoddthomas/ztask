@@ -35,6 +35,10 @@ enum Command {
         /// Increase logging verbosity
         #[clap(short, long, action=ArgAction::Count)]
         verbose: u8,
+
+        /// show all tasks
+        #[clap(short='a', long, action=ArgAction::SetTrue)]
+        show_all: bool,
     },
     /// Add one or more new tasks
     Add {
@@ -43,7 +47,7 @@ enum Command {
         task_names: Option<Vec<String>>,
 
         /// Indicate that the task(s) should be added as active (interrupt(s))
-        #[clap(short, action=ArgAction::SetTrue)]
+        #[clap(short, long, action=ArgAction::SetTrue)]
         is_interrupt: bool,
     },
     /// Del one or more tasks
@@ -72,7 +76,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 
     if let Some(subcmd) = args.command {
         match subcmd {
-            Command::List { verbose } => match process_list(&mut task_list, std::cmp::max(args.verbose, verbose)) {
+            Command::List { verbose , show_all } => match process_list(&mut task_list, std::cmp::max(args.verbose, verbose), show_all) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task(s) found", c)
                 },
@@ -109,8 +113,21 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8) -> Result<usize, Box<dyn Error>> {
-    print_categorized_task_list(task_list, verbosity);
+fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8, show_all: bool) -> Result<usize, Box<dyn Error>> {
+    if show_all {
+        print_categorized_task_list(task_list, verbosity);
+    } else {
+        let mut tasks = task_list.tasks.clone();
+        tasks.retain(|task| task.status == TaskStatus::Active);
+        let mut tasks = tasks.into_sorted_vec();
+        let task = tasks.remove(0);
+
+        if verbosity > 0 {
+            print_task_detailed(&task);
+        } else {
+            print_task_oneline(&task);
+        }
+    }
     Ok(task_list.tasks.len())
 }
 
@@ -128,10 +145,6 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == status);
         let mut tasks = tasks.into_sorted_vec();
-
-        // let fn_active = |s: &str| s.white();
-        // let fn_interrupted = |s: &str| s.bright_black();
-        // let fn_blocked = |s: &str| s.bright_black();
 
         if !tasks.is_empty() {
             println!("{}:", heading.bright_white());
@@ -151,15 +164,10 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
         };
 
         if !tasks.is_empty() {
-            // println!("{}:", heading.bright_white());
-            // if status == TaskStatus::Active {  // These are interrupted tasks
-                for task in tasks {
-                    print_task_oneline_with_format_override(
-                        &task, fn_format);
-                }
-            // } else {
-            //     for task in tasks { print_task_oneline(&task); }
-            // }
+            for task in tasks {
+                print_task_oneline_with_format_override(
+                    &task, fn_format);
+            }
         }
     }
 }
@@ -226,38 +234,31 @@ fn print_task_oneline(task: &Task) {
     println!();
 }
 
-// pub fn print_task_detailed(task: &Task) {
-//     let id = &task.id[0..9];
-//     // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
+pub fn print_task_detailed(task: &Task) {
+    let blocked = if task.blocked_by.is_empty() {
+        "".to_string().bright_green()
+    } else {
+        task
+            .blocked_by
+            .iter()
+            .map(|s| &s[..9])
+            .collect::<Vec<_>>()
+            .join(", ").bright_green()
+    };
 
-//     let priority = task.priority.to_string();
-//     let summary = task.summary.to_string();
-//     let status = task.status.to_string();
-//     let details = task.details.to_string();
-//     let blocked = if task.blocked_by.is_empty() {
-//         "".to_string()
-//     } else {
-//         task
-//             .blocked_by
-//             .iter()
-//             .map(|s| &s[..9])
-//             .collect::<Vec<_>>()
-//             .join(", ")
-//     };
-
-//     let id = id.bright_green();
-//     let summary = summary.bright_white();
-//     let status = status.bright_black();
-//     let blocked = blocked.bright_red();
-//     let details = details.bright_black();
-//     println!("——————————————————————————————————————————————————————");
-//     println!("summary: {}", summary);
-//     println!("id: {}", id);
-//     println!("priority: {}", priority);
-//     println!("status: {}", status);
-//     println!("blocked by: {}", blocked);
-//     println!("details: {}", details);
-// }
+    println!("  {}:    {}", "summary".bright_white(), task.summary.to_string().bright_white());
+    println!("  {}:         {}", "id".bright_white(), &task.id[0..9].to_string().bright_green());
+    println!("  {}:   {}", "priority".bright_white(), task.priority.to_string().bright_green());
+    println!("  {}:     {}", "status".bright_white(), task.status.to_string().bright_green());
+    println!("  {}:    {}", "created".bright_white(), task.created_at.format("%F %T").to_string().bright_green());
+    if task.status == TaskStatus::Blocked {
+        println!("  {}: {}", "blocked by".bright_white(), blocked);
+    }
+    if !task.details.is_empty() {
+        println!("  {}:", "details".bright_white());
+        println!("  {}", task.details.to_string().bright_green());
+    }
+}
 
 
 fn process_block_on(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
