@@ -94,9 +94,10 @@ impl Task {
         self.blocked_by = other.blocked_by.clone();
     }
 
-    // fn block(&mut self, blocked_by: &BTreeSet<String>) {
-    //     self.blocked_by.append(&mut blocked_by.clone());
-    // }
+    pub fn block_on(&mut self, blocker_id: String) {
+        self.blocked_by.insert(blocker_id);
+        self.status = TaskStatus::Blocked;
+    }
 
     // pub fn to_string(&self) -> String {
     //     let id = &self.id[0..9];

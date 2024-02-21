@@ -75,8 +75,37 @@ impl TaskList {
         self.tasks.retain(|task| task.id[0..id.len()] != id)
     }
 
+    /// Block the blockee on the blocker(s)
+    pub fn block_task_on(&mut self, blockee_id: &String, blocker_id: &String) -> usize {
+        // If we don't find exactly one task that starts with 'id',
+        // print a warning and return
+        let blockee_match_count = self.tasks.iter().filter(|task| &task.id[0..blockee_id.len()] == blockee_id).count();
+        if blockee_match_count !=1 {
+            println!("Blockee Id '{}' does not uniquely match one task.  It matches {}", blockee_id, blockee_match_count);
+            return 0;
+        }
+        let blocker_match_count = self.tasks.iter().filter(|task| &task.id[0..blocker_id.len()] == blocker_id).count();
+        if blocker_match_count !=1 {
+            println!("Blocker Id '{}' does not uniquely match one task.  It matches {}", blocker_id, blocker_match_count);
+            return 0;
+        }
+        // There will be only one match, so unwrap is safe
+        let blockee = self.tasks.iter().find(|task| &task.id[0..blockee_id.len()] == blockee_id).unwrap();
+        let blocker = self.tasks.iter().find(|task| &task.id[0..blocker_id.len()] == blocker_id).unwrap();
+
+        let mut updated_task = blockee.clone();
+        updated_task.block_on(blocker.id.clone());
+        // updated_task.invoke_editor().unwrap_or_default();  // TODO: Handle errors
+        let id = blockee.id.clone();
+        self.tasks.retain(|task| task.id != id);
+        self.tasks.push(updated_task);
+
+
+        1
+    }
+
     /// Edit the task whose id starts with the id string passed in.
-    pub fn edit_task(&mut self, id: String) -> usize{
+    pub fn edit_task(&mut self, id: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count !=1 {

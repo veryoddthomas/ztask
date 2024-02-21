@@ -58,6 +58,12 @@ enum Command {
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
+    /// Block a task on one or more other tasks
+    Block {
+        /// Id(s) of task(s) to delete
+        #[clap(num_args(2..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+    },
 }
 
 pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
@@ -91,6 +97,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
+            Command::Block { task_ids } => match process_block_on(&mut task_list, task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) updated", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
         }
     }
 
@@ -117,23 +129,37 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
         tasks.retain(|task| task.status == status);
         let mut tasks = tasks.into_sorted_vec();
 
+        // let fn_active = |s: &str| s.white();
+        // let fn_interrupted = |s: &str| s.bright_black();
+        // let fn_blocked = |s: &str| s.bright_black();
+
         if !tasks.is_empty() {
             println!("{}:", heading.bright_white());
 
-            let task = tasks.remove(0);
-            print_task_oneline(&task);
+            if status == TaskStatus::Active {
+                // Print the first active task normally
+                let task = tasks.remove(0);
+                print_task_oneline(&task);
+            }
         }
+        let fn_format = match status {
+            TaskStatus::Active => |s: &str| s.bright_black(),
+            TaskStatus::Backlog => |s: &str| s.white(),
+            TaskStatus::Blocked => |s: &str| s.bright_black(),
+            TaskStatus::Sleeping => |s: &str| s.bright_black(),
+            TaskStatus::Completed => |s: &str| s.bright_black().strikethrough(),
+        };
 
         if !tasks.is_empty() {
             // println!("{}:", heading.bright_white());
-            if status == TaskStatus::Active {  // These are interrupted tasks
+            // if status == TaskStatus::Active {  // These are interrupted tasks
                 for task in tasks {
                     print_task_oneline_with_format_override(
-                        &task, |s| s.bright_black());
+                        &task, fn_format);
                 }
-            } else {
-                for task in tasks { print_task_oneline(&task); }
-            }
+            // } else {
+            //     for task in tasks { print_task_oneline(&task); }
+            // }
         }
     }
 }
@@ -233,6 +259,23 @@ fn print_task_oneline(task: &Task) {
 //     println!("details: {}", details);
 // }
 
+
+fn process_block_on(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let mut blocker_count = 0;
+    if task_ids.is_empty() {
+        // TODO: Should this prompt for which to block on?
+        println!("block_on arg list is empty, which is not currently allowed");
+    } else {
+        // Edit selected tasks
+        let blockee = task_ids.first().unwrap();
+        let mut task_ids = task_ids.clone();
+        task_ids.remove(0);
+        for id in task_ids.clone() {
+            blocker_count += task_list.block_task_on(blockee, &id);
+        }
+    }
+    Ok(blocker_count)
+}
 
 fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
     let mut edit_count = 0;
