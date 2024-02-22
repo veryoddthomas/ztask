@@ -281,8 +281,12 @@ fn process_block_on(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -
 fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
     let mut edit_count = 0;
     if task_ids.is_empty() {
-        // TODO: Should this edit the most recent task?
-        println!("edit arg list is empty, which is not currently allowed");
+        let mut tasks = task_list.tasks.clone();
+        tasks.retain(|task| task.status == TaskStatus::Active);
+        let mut tasks = tasks.into_sorted_vec();
+        let task = tasks.remove(0);
+        task_list.edit_task(task.id);
+        edit_count = 1;
     } else {
         // Edit selected tasks
         for id in task_ids {
