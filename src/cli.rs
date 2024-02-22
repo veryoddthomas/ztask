@@ -46,6 +46,12 @@ enum Command {
         #[clap(short, long, action=ArgAction::SetTrue)]
         is_interrupt: bool,
     },
+    /// Start work on a task
+    Start {
+        /// Id(s) of task(s) to delete
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+    },
     /// Del one or more tasks
     Del {
         /// Id(s) of task(s) to delete
@@ -62,6 +68,12 @@ enum Command {
     Block {
         /// Id(s) of task(s) to delete
         #[clap(num_args(2..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+    },
+    /// Complete one or more tasks
+    Complete {
+        /// Id(s) of task(s) to delete
+        #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
 }
@@ -85,6 +97,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                     },
                     Err(e) => eprintln!("error in processing : {}", e),
             },
+            Command::Start { task_ids } => match process_start(&mut task_list, task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task started", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
             Command::Del { task_ids } => match process_del(&mut task_list, task_ids.unwrap_or_default()) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task(s) removed", c)
@@ -98,6 +116,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 Err(e) => eprintln!("error in processing : {}", e),
             },
             Command::Block { task_ids } => match process_block_on(&mut task_list, task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) updated", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
+            Command::Complete { task_ids } => match process_complete(&mut task_list, task_ids.unwrap_or_default()) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task(s) updated", c)
                 },
@@ -276,6 +300,47 @@ fn process_block_on(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -
         }
     }
     Ok(blocker_count)
+}
+
+fn process_complete(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let mut completed_count = 0;
+    if task_ids.is_empty() {
+        let mut tasks = task_list.tasks.clone();
+        tasks.retain(|task| task.status == TaskStatus::Active);
+        let mut tasks = tasks.into_sorted_vec();
+        let task = tasks.remove(0);
+        task_list.complete_task(task.id);
+        completed_count = 1;
+    } else {
+        // Complete selected tasks
+        for id in task_ids {
+            completed_count += task_list.complete_task(id);
+        }
+    }
+    Ok(completed_count)
+}
+
+fn process_start(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let mut completed_count = 0;
+    if task_ids.is_empty() {
+        let count_active = task_list.tasks.iter().filter(|task| task.status == TaskStatus::Active).count();
+
+        if count_active == 0 {
+            let mut tasks = task_list.tasks.clone();
+            tasks.retain(|task| task.status == TaskStatus::Backlog);
+            let mut tasks = tasks.into_sorted_vec();
+            let task = tasks.remove(0);
+            task_list.start_task(task.id);
+            completed_count = 1;
+        } else {
+            println!("Can't activate default backlog task when there are active tasks");
+            println!("Clear your active tasks or use the start command with a task id");
+        }
+    } else {
+        task_list.start_task(task_ids.first().unwrap().clone());
+        completed_count = 1;
+    }
+    Ok(completed_count)
 }
 
 fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
