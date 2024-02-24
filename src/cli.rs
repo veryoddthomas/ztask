@@ -10,7 +10,7 @@ trait ColoredStringExt {
 }
 
 impl ColoredStringExt for String {
-    fn slate_blue(self) -> ColoredString { return self.truecolor(26, 126, 165); }
+    fn slate_blue(self) -> ColoredString { self.truecolor(26, 126, 165) }
 }
 
 /// Default database path
@@ -170,6 +170,9 @@ fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8, show_all: boo
     } else {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
+
+        if tasks.is_empty() { return Ok(0) }
+
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
 
@@ -283,24 +286,15 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
         }
         // let s = duration_fragments.join(" ");
         duration_string.push_str(&duration_fragments.join(" "));
-        duration_string.push_str(")");
-
-        if time_delta > chrono::Duration::seconds(0) {
-            // set_color(&format!("[{}]", wake_at.format("%F %T").to_string()))
-            // set_color(&format!("{} days {}h {}m {}s  [{:?}]  [{}]", days, hours, minutes, seconds, time_delta, wake_at.format("%F %T").to_string()))
-            set_color(&duration_string)
-        } else {
-            // set_color(&format!("{} days {}h {}m {}s  [{:?}]  [{}]", days, hours, minutes, seconds, time_delta, wake_at.format("%F %T").to_string()))
-            // set_color("")
-            set_color(&duration_string)
-        }
+        duration_string.push(')');
+        set_color(&duration_string)
     };
 
     print!("  {}", summary);
     if !task.blocked_by.is_empty() {
         print!("  {}", blocked);
     }
-    if !task.wake_at.is_none() {
+    if task.wake_at.is_some() {
         print!("  {}", wake_at);
     }
     println!();
@@ -365,7 +359,7 @@ pub fn print_task_detailed(task: &Task) {
     }
     if !task.details.is_empty() {
         // let details = str::replace(&task.details, "!", "?");
-        let details = task.details.replace( "\n", &format!("\n  {:width$} ", ""));
+        let details = task.details.replace( '\n', &format!("\n  {:width$} ", ""));
         println!("  {:width$} {}", "details:", details.slate_blue());
     }
 }
@@ -393,6 +387,9 @@ fn process_complete(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
+
+        if tasks.is_empty() { return Ok(0) }
+
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
         task_list.complete_task(task.id);
@@ -414,6 +411,9 @@ fn process_start(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> R
         if count_active == 0 {
             let mut tasks = task_list.tasks.clone();
             tasks.retain(|task| task.status == TaskStatus::Backlog);
+
+            if tasks.is_empty() { return Ok(0) }
+
             let mut tasks = tasks.into_sorted_vec();
             let task = tasks.remove(0);
             task_list.start_task(task.id);
@@ -434,6 +434,9 @@ fn process_sleep(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, dura
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
+
+        if tasks.is_empty() { return Ok(0) }
+
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
         task_list.suspend_task(task.id, duration.clone());
@@ -452,6 +455,9 @@ fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Re
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
+
+        if tasks.is_empty() { return Ok(0) }
+
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
         task_list.edit_task(task.id);

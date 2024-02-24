@@ -94,7 +94,7 @@ impl Task {
         self.category = other.category.clone();
         self.status = other.status.clone();
         self.blocked_by = other.blocked_by.clone();
-        self.wake_at = other.wake_at.clone();
+        self.wake_at = other.wake_at;
     }
 
     pub fn block_on(&mut self, blocker_id: String) {
