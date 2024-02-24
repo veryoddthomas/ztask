@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{self, Write};
 use std::fs;
 // use std::collections::VecDeque;
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, BTreeSet};
 use crate::task::{Task, TaskStatus};
 use parse_duration::parse;
 // use std::time::Duration;
@@ -31,6 +31,10 @@ impl TaskList {
                 let woken = task_list.wake_tasks();
                 if woken > 0 {
                     println!("Woke {} task(s)", woken);
+                }
+                let unblocked = task_list.unblock_tasks();
+                if unblocked > 0 {
+                    println!("Unblocked {} task(s)", unblocked);
                 }
                 task_list
             }
@@ -63,6 +67,37 @@ impl TaskList {
         }
         self.tasks = updated_tasks;
         num_woken
+    }
+
+    /// Check for tasks that are blocked on other tasks that have been completed
+    /// or deleted and unblock them.
+    /// Returns the number of tasks unblocked.
+    pub fn unblock_tasks(&mut self) -> usize {
+        let mut num_unblocked = 0;
+
+        let blocking_capable_ids: BTreeSet<String> =
+        self.tasks.iter()
+            .filter(|task| task.status != TaskStatus::Completed)
+            .map(|task|task.id.clone())
+            .collect();
+
+        // let updated_tasks = self.tasks.clone().into_sorted_vec();
+        let mut updated_tasks: BinaryHeap<Task> = BinaryHeap::new();
+
+        // Process every node in the BinaryHeap
+        while let Some(mut task) = self.tasks.pop() {
+            if task.status == TaskStatus::Blocked {
+                let intersection: BTreeSet<_> = task.blocked_by.intersection(&blocking_capable_ids).cloned().collect();
+                task.blocked_by = intersection;
+                if task.blocked_by.is_empty() {
+                    task.status = TaskStatus::Backlog;
+                    num_unblocked += 1;
+                }
+            }
+            updated_tasks.push(task);
+        }
+        self.tasks = updated_tasks;
+        num_unblocked
     }
 
     // #[cfg(test)]
