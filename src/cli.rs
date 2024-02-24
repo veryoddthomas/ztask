@@ -199,7 +199,7 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
         let mut tasks = tasks.into_sorted_vec();
 
         if !tasks.is_empty() {
-            println!("{}:", heading.bright_white());
+            println!("{}:", heading.bright_white().underline());
 
             if status == TaskStatus::Active {
                 // Print the first active task normally
@@ -349,18 +349,18 @@ pub fn print_task_detailed(task: &Task) {
     };
 
     let width = 11;
-    println!("  {:width$} {}", "summary:", task.summary.to_string().slate_blue());
-    println!("  {:width$} {}", "id:", &task.id[0..9].to_string().slate_blue());
-    println!("  {:width$} {}", "priority:", task.priority.to_string().slate_blue());
-    println!("  {:width$} {}", "status:", task.status.to_string().slate_blue());
-    println!("  {:width$} {}", "created:", task.created_at.format("%F %T").to_string().slate_blue());
+    println!("  {:width$} {}", "summary:".bright_white(), task.summary.to_string().bright_black());
+    println!("  {:width$} {}", "id:".bright_white(), &task.id[0..9].to_string().bright_black());
+    println!("  {:width$} {}", "priority:".bright_white(), task.priority.to_string().bright_black());
+    println!("  {:width$} {}", "status:".bright_white(), task.status.to_string().bright_black());
+    println!("  {:width$} {}", "created:".bright_white(), task.created_at.format("%F %T").to_string().bright_black());
     if task.status == TaskStatus::Blocked {
         println!("  {:width$} {}", "blocked by:".bright_white(), blocked);
     }
     if !task.details.is_empty() {
         // let details = str::replace(&task.details, "!", "?");
         let details = task.details.replace( '\n', &format!("\n  {:width$} ", ""));
-        println!("  {:width$} {}", "details:", details.slate_blue());
+        println!("  {:width$} {}", "details:".bright_white(), details.bright_black());
     }
 }
 
