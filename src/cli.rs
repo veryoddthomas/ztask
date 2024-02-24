@@ -5,6 +5,14 @@ use clap::{Parser, Subcommand, ArgAction};
 use colored::{ColoredString, Colorize};
 use chrono::Local;
 
+trait ColoredStringExt {
+    fn slate_blue(self) -> ColoredString;
+}
+
+impl ColoredStringExt for String {
+    fn slate_blue(self) -> ColoredString { return self.truecolor(26, 126, 165); }
+}
+
 /// Default database path
 const DB_PATH: &str = "./data/db.json";
 
@@ -208,6 +216,7 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
             for task in tasks {
                 print_task_oneline_with_format_override(
                     &task, fn_format);
+                // print_task_oneline(&task, true);
             }
         }
     }
@@ -306,7 +315,7 @@ fn print_task_oneline(task: &Task, show_status: bool) {
     let id = match task.status {
         TaskStatus::Active => id.bright_green(),
         TaskStatus::Backlog => id.white(),
-        TaskStatus::Blocked => id.truecolor(238,105,105),  // bright_red(),
+        TaskStatus::Blocked => id.bright_red(),
         TaskStatus::Sleeping => id.bright_black(),
         TaskStatus::Completed => id.bright_black(),
     };
@@ -319,14 +328,14 @@ fn print_task_oneline(task: &Task, show_status: bool) {
 
     // let summary = task.summary.to_string().bright_black();
     let blocked = if task.blocked_by.is_empty() {
-        "".truecolor(238,105,105)  // bright_red()
+        "".bright_red()
     } else {
         format!("[{}]",
             task.blocked_by
                 .iter()
                 .map(|s| &s[..9])
                 .collect::<Vec<_>>()
-                .join(", ")).truecolor(238,105,105)  // bright_red()
+                .join(", ")).bright_red()
     };
 
     print!("  {}  {}", task.summary.to_string().white(), blocked);
@@ -335,30 +344,29 @@ fn print_task_oneline(task: &Task, show_status: bool) {
 
 pub fn print_task_detailed(task: &Task) {
     let blocked = if task.blocked_by.is_empty() {
-        "".to_string().truecolor(26, 126, 165)
+        "".to_string().slate_blue()
     } else {
         task
             .blocked_by
             .iter()
             .map(|s| &s[..9])
             .collect::<Vec<_>>()
-            .join(", ").truecolor(26, 126, 165)
+            .join(", ").slate_blue()
     };
 
     let width = 11;
-    println!("  {:width$} {}", "summary:", task.summary.to_string().truecolor(40, 194, 254));
-    println!("  {:width$} {}", "id:", &task.id[0..9].to_string().truecolor(0x1a, 0x7e, 0xa5));
-    println!("  {:width$} {}", "priority:", task.priority.to_string().truecolor(0x1a, 0x7e, 0xa5));
-    println!("  {:width$} {}", "status:", task.status.to_string().truecolor(0x1a, 0x7e, 0xa5));
-    println!("  {:width$} {}", "created:", task.created_at.format("%F %T").to_string().truecolor(0x1a, 0x7e, 0xa5));
+    println!("  {:width$} {}", "summary:", task.summary.to_string().slate_blue());
+    println!("  {:width$} {}", "id:", &task.id[0..9].to_string().slate_blue());
+    println!("  {:width$} {}", "priority:", task.priority.to_string().slate_blue());
+    println!("  {:width$} {}", "status:", task.status.to_string().slate_blue());
+    println!("  {:width$} {}", "created:", task.created_at.format("%F %T").to_string().slate_blue());
     if task.status == TaskStatus::Blocked {
         println!("  {:width$} {}", "blocked by:".bright_white(), blocked);
     }
     if !task.details.is_empty() {
         // let details = str::replace(&task.details, "!", "?");
         let details = task.details.replace( "\n", &format!("\n  {:width$} ", ""));
-        println!("  {:width$} {}", "details:", details.truecolor(0x1a, 0x7e, 0xa5));
-        // print!("  {:width$} {}", "details:", details.truecolor(0x1a, 0x7e, 0xa5));
+        println!("  {:width$} {}", "details:", details.slate_blue());
     }
 }
 
