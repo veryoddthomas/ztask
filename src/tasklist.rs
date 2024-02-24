@@ -4,6 +4,9 @@ use std::fs;
 // use std::collections::VecDeque;
 use std::collections::BinaryHeap;
 use crate::task::{Task, TaskStatus};
+use parse_duration::parse;
+// use std::time::Duration;
+use chrono::Local;
 
 pub struct TaskList {
     pub tasks: BinaryHeap<Task>,
@@ -23,7 +26,14 @@ impl TaskList {
         let result = TaskList::load(db_path.clone());
 
         match result {
-            Ok(tasks) => TaskList { tasks, db_path },
+            Ok(tasks) => {
+                let mut task_list = TaskList { tasks, db_path };
+                let woken = task_list.wake_tasks();
+                if woken > 0 {
+                    println!("Woke {} task(s)", woken);
+                }
+                task_list
+            }
             Err(_) => {
                 TaskList { tasks: BinaryHeap::new(), db_path }
             }
@@ -33,6 +43,26 @@ impl TaskList {
     /// Return the number of tasks in the list.
     pub fn num_tasks(&self) -> usize {
         self.tasks.len()
+    }
+
+    pub fn wake_tasks(&mut self) -> usize {
+        let mut num_woken = 0;
+        let now = Local::now();
+
+        // let updated_tasks = self.tasks.clone().into_sorted_vec();
+        let mut updated_tasks: BinaryHeap<Task> = BinaryHeap::new();
+
+        // Process every node in the BinaryHeap
+        while let Some(mut task) = self.tasks.pop() {
+            if task.status == TaskStatus::Sleeping && task.wake_at.unwrap() <= now {
+                task.status = TaskStatus::Backlog;
+                task.wake_at = None;
+                num_woken += 1;
+            }
+            updated_tasks.push(task);
+        }
+        self.tasks = updated_tasks;
+        num_woken
     }
 
     // #[cfg(test)]
@@ -141,6 +171,7 @@ impl TaskList {
         self.tasks.push(updated_task);
         1
     }
+
     /// Start the task whose id starts with the id string passed in.
     pub fn start_task(&mut self, id: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
@@ -160,6 +191,27 @@ impl TaskList {
         1
     }
 
+    /// Suspend the task whose id starts with the id string passed in.
+    pub fn suspend_task(&mut self, id: String, duration: String) -> usize {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+        let match_count = tasks.count();
+        if match_count !=1 {
+            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+            return 0;
+        }
+
+        // There will be only one match, so unwrap is safe
+        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let mut updated_task = task.clone();
+        updated_task.status = TaskStatus::Sleeping;
+        let time_delta = parse(&duration).unwrap();
+        println!("Sleeping for {} seconds", time_delta.as_secs());
+        updated_task.wake_at = Some(Local::now() + time_delta);
+        let id = task.id.clone();
+        self.tasks.retain(|task| task.id != id);
+        self.tasks.push(updated_task);
+        1
+    }
 
     // pub fn get_task(&self, id: String) -> Option<&Task> {
     //     self.tasks.iter().find(|task| task.id == id)

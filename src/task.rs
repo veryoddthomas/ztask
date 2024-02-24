@@ -40,6 +40,7 @@ pub struct Task {
     pub created_at: DateTime<Local>,
     pub status: TaskStatus,
     pub blocked_by: BTreeSet<String>,
+    pub wake_at: Option<DateTime<Local>>,
 }
 
 impl Ord for Task {
@@ -81,6 +82,7 @@ impl Task {
             },
             // blocked_by: VecDeque::from(["9d8607f24".to_string(), "c1ed178b5".to_string()]),
             blocked_by: BTreeSet::new(),
+            wake_at: None,
         }
     }
 
@@ -92,32 +94,13 @@ impl Task {
         self.category = other.category.clone();
         self.status = other.status.clone();
         self.blocked_by = other.blocked_by.clone();
+        self.wake_at = other.wake_at.clone();
     }
 
     pub fn block_on(&mut self, blocker_id: String) {
         self.blocked_by.insert(blocker_id);
         self.status = TaskStatus::Blocked;
     }
-
-    // pub fn to_string(&self) -> String {
-    //     let id = &self.id[0..9];
-    //     // let created = self.created_at.format("%Y-%m-%d %H:%M").to_string();
-
-    //     let summary = self.summary.to_string();
-    //     let status = self.status.to_string();
-    //     let blocked = if self.blocked_by.is_empty() {
-    //         "".to_string()
-    //     } else {
-    //         self
-    //             .blocked_by
-    //             .iter()
-    //             .map(|s| &s[..9])
-    //             .collect::<Vec<_>>()
-    //             .join(", ")
-    //     };
-
-    //     format!("{}  {}  {}  {}", id, summary, status, blocked)
-    // }
 
     /// Invoke the default editor to edit the task
     pub fn invoke_editor(&mut self) -> Result<(), io::Error> {

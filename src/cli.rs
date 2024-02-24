@@ -3,6 +3,7 @@ use crate::task::{Task, TaskStatus};
 use crate::tasklist;
 use clap::{Parser, Subcommand, ArgAction};
 use colored::{ColoredString, Colorize};
+use chrono::Local;
 
 /// Default database path
 const DB_PATH: &str = "./data/db.json";
@@ -52,6 +53,16 @@ enum Command {
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
+
+    /// Put one or more tasks to sleep
+    Sleep {
+        /// Id(s) of task(s) to put to sleep
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+        #[clap(short, long)]
+        duration: String,
+    },
+
     /// Del one or more tasks
     Del {
         /// Id(s) of task(s) to delete
@@ -98,6 +109,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                     Err(e) => eprintln!("error in processing : {}", e),
             },
             Command::Start { task_ids } => match process_start(&mut task_list, task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task started", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
+            Command::Sleep { task_ids, duration } => match process_sleep(&mut task_list, task_ids.unwrap_or_default(), duration) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task started", c)
                 },
@@ -207,7 +224,7 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
 
     let summary = set_color(&task.summary.to_string());
     let blocked = if task.blocked_by.is_empty() {
-        set_color("")  // bright_red()
+        set_color("")
     } else {
         set_color(&format!("[{}]",
             task.blocked_by
@@ -216,8 +233,67 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
                     .collect::<Vec<_>>()
                     .join(", ")))
     };
+    let wake_at = if task.wake_at.is_none() {
+        set_color("")
+    } else {
+        let wake_at = task.wake_at.unwrap();
+        let time_delta = wake_at - Local::now();
+        let mut total_seconds = time_delta.num_seconds();
+        let mut duration_string = wake_at.format("%F %T (").to_string(); //String::new();
 
-    print!("  {}  {}", summary, blocked);
+        let _expired = if total_seconds <= 0 {
+            total_seconds = total_seconds.abs();
+            duration_string.push_str("overdue by ");
+            true
+        } else {
+            false
+        };
+
+        let days = total_seconds / (60 * 60 * 24);
+        let hours = (total_seconds / (60 * 60)) % 24;
+        let minutes = (total_seconds / 60) %  60;
+        let seconds = total_seconds % 60;
+
+        let mut duration_fragments: Vec<String> = vec![];
+
+        if days > 0 {
+            // duration_string.push_str(&format!("{}d ", days));
+            duration_fragments.push(format!("{}d", days));
+        }
+        if hours > 0 {
+            // duration_string.push_str(&format!("{}h ", hours));
+            duration_fragments.push(format!("{}h", hours));
+        }
+        if minutes > 0 {
+            // duration_string.push_str(&format!("{}m ", minutes));
+            duration_fragments.push(format!("{}m", minutes));
+        }
+        if seconds > 0 {
+            // duration_string.push_str(&format!("{}s ", seconds));
+            duration_fragments.push(format!("{}s", seconds));
+        }
+        // let s = duration_fragments.join(" ");
+        duration_string.push_str(&duration_fragments.join(" "));
+        duration_string.push_str(")");
+
+        if time_delta > chrono::Duration::seconds(0) {
+            // set_color(&format!("[{}]", wake_at.format("%F %T").to_string()))
+            // set_color(&format!("{} days {}h {}m {}s  [{:?}]  [{}]", days, hours, minutes, seconds, time_delta, wake_at.format("%F %T").to_string()))
+            set_color(&duration_string)
+        } else {
+            // set_color(&format!("{} days {}h {}m {}s  [{:?}]  [{}]", days, hours, minutes, seconds, time_delta, wake_at.format("%F %T").to_string()))
+            // set_color("")
+            set_color(&duration_string)
+        }
+    };
+
+    print!("  {}", summary);
+    if !task.blocked_by.is_empty() {
+        print!("  {}", blocked);
+    }
+    if !task.wake_at.is_none() {
+        print!("  {}", wake_at);
+    }
     println!();
 }
 
@@ -279,8 +355,10 @@ pub fn print_task_detailed(task: &Task) {
         println!("  {:width$} {}", "blocked by:".bright_white(), blocked);
     }
     if !task.details.is_empty() {
-        println!("  {}", "details:".bright_white());
-        println!("  {}", task.details.to_string().truecolor(0x1a, 0x7e, 0xa5));
+        // let details = str::replace(&task.details, "!", "?");
+        let details = task.details.replace( "\n", &format!("\n  {:width$} ", ""));
+        println!("  {:width$} {}", "details:", details.truecolor(0x1a, 0x7e, 0xa5));
+        // print!("  {:width$} {}", "details:", details.truecolor(0x1a, 0x7e, 0xa5));
     }
 }
 
@@ -341,6 +419,24 @@ fn process_start(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> R
         completed_count = 1;
     }
     Ok(completed_count)
+}
+
+fn process_sleep(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, duration: String) -> Result<usize, Box<dyn Error>> {
+    let mut suspended_count = 0;
+    if task_ids.is_empty() {
+        let mut tasks = task_list.tasks.clone();
+        tasks.retain(|task| task.status == TaskStatus::Active);
+        let mut tasks = tasks.into_sorted_vec();
+        let task = tasks.remove(0);
+        task_list.suspend_task(task.id, duration.clone());
+        suspended_count = 1;
+    } else {
+        // Put selected tasks to sleep
+        for id in task_ids {
+            suspended_count += task_list.suspend_task(id, duration.clone());
+        }
+    }
+    Ok(suspended_count)
 }
 
 fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
