@@ -54,6 +54,10 @@ enum Command {
         /// Indicate that the task(s) should be added as active (interrupt(s))
         #[clap(short, long, action=ArgAction::SetTrue)]
         is_interrupt: bool,
+
+        /// Invoke editor on for each added task
+        #[clap(short, long, action=ArgAction::SetTrue)]
+        edit: bool,
     },
     /// Start work on a task
     Start {
@@ -109,10 +113,19 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
-            Command::Add { task_names, is_interrupt } =>
+            Command::Add { task_names, is_interrupt , edit} =>
                 match process_add(&mut task_list, task_names.unwrap_or_default(), is_interrupt) {
-                    Ok(ids) => if args.verbose > 0 {
-                        println!("created task(s) {:?}", ids)
+                    Ok(ids) => {
+                        if args.verbose > 0 { println!("created task(s) {:?}", ids); }
+                        if edit {
+                            // Invoke editor on each new task
+                            match process_edit(&mut task_list, ids) {
+                                Ok(c) => if args.verbose > 0 {
+                                    println!("edited {} task(s)", c);
+                                },
+                                Err(e) => eprintln!("error in processing : {}", e),
+                            }
+                        }
                     },
                     Err(e) => eprintln!("error in processing : {}", e),
             },
