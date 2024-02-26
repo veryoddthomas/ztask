@@ -39,11 +39,20 @@ pub struct Arguments {
 /// Subcommands for the application
 #[derive(Subcommand, Debug)]
 enum Command {
-    /// List existing tasks
+    /// List all tasks
     List {
         /// Increase logging verbosity
         #[clap(short, long, action=ArgAction::Count)]
         verbose: u8,
+    },
+    /// Show specific tasks
+    Show {
+        /// Increase logging verbosity
+        #[clap(short, long, action=ArgAction::Count)]
+        verbose: u8,
+        /// Id(s) of task(s) to show
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
     },
     /// Add one or more new tasks
     Add {
@@ -117,6 +126,12 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
+            Command::Show { task_ids , verbose } => match process_show(&mut task_list, std::cmp::max(args.verbose, verbose), task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) updated", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
             Command::Add { task_names, is_interrupt , edit} =>
                 match process_add(&mut task_list, task_names.unwrap_or_default(), is_interrupt) {
                     Ok(ids) => {
@@ -185,6 +200,39 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     }
 
     Ok(())
+}
+
+fn process_show(task_list: &mut tasklist::TaskList, verbosity: u8, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let mut processed_task_count = 0;
+    if task_ids.is_empty() {
+        let mut tasks = task_list.tasks.clone();
+        tasks.retain(|task| task.status == TaskStatus::Active);
+
+        if tasks.is_empty() { return Ok(0) }
+
+        let mut tasks = tasks.into_sorted_vec();
+        let task = tasks.remove(0);
+        if verbosity > 0 {
+            print_task_detailed(&task);
+        } else {
+            print_task_oneline(&task, true);
+        }
+        processed_task_count = 1;
+    } else {
+        // Edit selected tasks
+        for id in task_ids {
+            if let Some(task) = task_list.copy_task(id.clone()) {
+                if verbosity > 0 {
+                    print_task_detailed(&task);
+                } else {
+                    print_task_oneline(&task, true);
+                }
+            } else {
+                println!("task {} not found", id);
+            }
+        }
+    }
+    Ok(processed_task_count)
 }
 
 fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8, show_all: bool) -> Result<usize, Box<dyn Error>> {

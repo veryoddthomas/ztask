@@ -49,6 +49,21 @@ impl TaskList {
         self.tasks.len()
     }
 
+    pub fn copy_task(&mut self, id: String) -> Option<Task> {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+        let match_count = tasks.count();
+        if match_count !=1 {
+            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+            return None;
+        }
+
+        // There will be only one match, so unwrap is safe
+        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+
+        Some(task.clone())
+    }
+
+
     pub fn wake_tasks(&mut self) -> usize {
         let mut num_woken = 0;
         let now = Local::now();
