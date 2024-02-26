@@ -59,22 +59,6 @@ enum Command {
         #[clap(short, long, action=ArgAction::SetTrue)]
         edit: bool,
     },
-    /// Start work on a task
-    Start {
-        /// Id(s) of task(s) to delete
-        #[clap(num_args(0..), action=ArgAction::Append)]
-        task_ids: Option<Vec<String>>,
-    },
-
-    /// Put one or more tasks to sleep
-    Sleep {
-        /// Id(s) of task(s) to put to sleep
-        #[clap(num_args(0..), action=ArgAction::Append)]
-        task_ids: Option<Vec<String>>,
-        #[clap(short, long)]
-        duration: String,
-    },
-
     /// Del one or more tasks
     Del {
         /// Id(s) of task(s) to delete
@@ -87,15 +71,35 @@ enum Command {
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
+    /// Start work on a task
+    Start {
+        /// Id(s) of task(s) to start
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+    },
+    /// Stop work on a task
+    Stop {
+        /// Id(s) of task(s) to stop
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+    },
+    /// Put one or more tasks to sleep
+    Sleep {
+        /// Id(s) of task(s) to put to sleep
+        #[clap(num_args(0..), action=ArgAction::Append)]
+        task_ids: Option<Vec<String>>,
+        #[clap(short, long)]
+        duration: String,
+    },
     /// Block a task on one or more other tasks
     Block {
-        /// Id(s) of task(s) to delete
+        /// Id(s) of task(s) to block
         #[clap(num_args(2..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
     /// Complete one or more tasks
     Complete {
-        /// Id(s) of task(s) to delete
+        /// Id(s) of task(s) to complete
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
     },
@@ -131,13 +135,19 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
             },
             Command::Start { task_ids } => match process_start(&mut task_list, task_ids.unwrap_or_default()) {
                 Ok(c) => if args.verbose > 0 {
-                    println!("{} task started", c)
+                    println!("{} task(s) started", c)
+                },
+                Err(e) => eprintln!("error in processing : {}", e),
+            },
+            Command::Stop { task_ids } => match process_stop(&mut task_list, task_ids.unwrap_or_default()) {
+                Ok(c) => if args.verbose > 0 {
+                    println!("{} task(s) stopped", c)
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
             Command::Sleep { task_ids, duration } => match process_sleep(&mut task_list, task_ids.unwrap_or_default(), duration) {
                 Ok(c) => if args.verbose > 0 {
-                    println!("{} task started", c)
+                    println!("{} task(s) suspended", c)
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
@@ -437,6 +447,31 @@ fn process_start(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> R
         }
     } else {
         task_list.start_task(task_ids.first().unwrap().clone());
+        completed_count = 1;
+    }
+    Ok(completed_count)
+}
+
+fn process_stop(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+    let mut completed_count = 0;
+    if task_ids.is_empty() {
+        let count_active = task_list.tasks.iter().filter(|task| task.status == TaskStatus::Active).count();
+
+        if count_active != 0 {
+            let mut tasks = task_list.tasks.clone();
+            tasks.retain(|task| task.status == TaskStatus::Active);
+
+            // if tasks.is_empty() { return Ok(0) }
+
+            let mut tasks = tasks.into_sorted_vec();
+            let task = tasks.remove(0);
+            task_list.suspend_task(task.id, "0".to_string());
+            completed_count = 1;
+        } else {
+            println!("There's no default active task to stop");
+        }
+    } else {
+        task_list.suspend_task(task_ids.first().unwrap().clone(), "0".to_string());
         completed_count = 1;
     }
     Ok(completed_count)
