@@ -4,6 +4,7 @@ use crate::tasklist;
 use clap::{Parser, Subcommand, ArgAction};
 use colored::{ColoredString, Colorize};
 use chrono::Local;
+use shellexpand;
 
 trait ColoredStringExt {
     fn slate_blue(self) -> ColoredString;
@@ -14,7 +15,8 @@ impl ColoredStringExt for String {
 }
 
 /// Default database path
-const DB_PATH: &str = "./data/db.json";
+// const DB_PATH: &str = "./data/db.json";
+const DB_PATH: &str = "$HOME/.ztask/taskdb.json";
 
 #[derive(Parser,Default,Debug)]
 #[clap(name="ZTask", author="Tom Zakrajsek", version, about)]
@@ -114,9 +116,27 @@ enum Command {
     },
 }
 
+use std::path::Path;
+
+fn create_path(file_path: &str) -> std::io::Result<()> {
+    // Create a Path from the provided file_path
+    let path = Path::new(file_path);
+
+    // Create the directory if it doesn't exist
+    if let Some(parent) = path.parent() {
+        if !parent.exists() {
+            std::fs::create_dir_all(parent)?;
+        }
+    }
+
+    Ok(())
+}
+
 pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     let args = arg_overrides.unwrap_or(Arguments::parse());
-    let mut task_list = tasklist::TaskList::new(args.db);
+    let db_path = shellexpand::env(&args.db)?;
+    create_path(&db_path)?;
+    let mut task_list = tasklist::TaskList::new(db_path.to_string());
 
     if let Some(subcmd) = args.command {
         match subcmd {
