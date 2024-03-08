@@ -203,6 +203,25 @@ impl TaskList {
         1
     }
 
+    /// Edit the details for the task whose id starts with the id string passed in.
+    pub fn edit_task_details(&mut self, id: String) -> usize {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+        let match_count = tasks.count();
+        if match_count !=1 {
+            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+            return 0;
+        }
+
+        // There will be only one match, so unwrap is safe
+        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let mut updated_task = task.clone();
+        updated_task.invoke_editor_for_details().unwrap_or_default();  // TODO: Handle errors
+        let id = task.id.clone();
+        self.tasks.retain(|task| task.id != id);
+        self.tasks.push(updated_task);
+        1
+    }
+
     /// Complete the task whose id starts with the id string passed in.
     pub fn complete_task(&mut self, id: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);

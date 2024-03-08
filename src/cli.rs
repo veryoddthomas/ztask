@@ -81,6 +81,10 @@ enum Command {
         /// Id(s) of task(s) to edit
         #[clap(num_args(0..), action=ArgAction::Append)]
         task_ids: Option<Vec<String>>,
+
+        /// Indicate that the we should only edit the details (which makes multiline editing easier)
+        #[clap(short, long, action=ArgAction::SetTrue)]
+        details_only: bool,
     },
     /// Start work on a task
     Start {
@@ -158,7 +162,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                         if args.verbose > 0 { println!("created task(s) {:?}", ids); }
                         if edit {
                             // Invoke editor on each new task
-                            match process_edit(&mut task_list, ids) {
+                            match process_edit(&mut task_list, ids, false) {
                                 Ok(c) => if args.verbose > 0 {
                                     println!("edited {} task(s)", c);
                                 },
@@ -192,7 +196,7 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 },
                 Err(e) => eprintln!("error in processing : {}", e),
             },
-            Command::Edit { task_ids } => match process_edit(&mut task_list, task_ids.unwrap_or_default()) {
+            Command::Edit { task_ids, details_only } => match process_edit(&mut task_list, task_ids.unwrap_or_default(), details_only) {
                 Ok(c) => if args.verbose > 0 {
                     println!("{} task(s) updated", c)
                 },
@@ -566,7 +570,7 @@ fn process_sleep(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, dura
     Ok(suspended_count)
 }
 
-fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, details_only: bool) -> Result<usize, Box<dyn Error>> {
     let mut edit_count = 0;
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
@@ -576,12 +580,21 @@ fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Re
 
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
-        task_list.edit_task(task.id);
+        if details_only {
+            task_list.edit_task_details(task.id);
+        } else {
+            task_list.edit_task(task.id);
+        }
         edit_count = 1;
     } else {
         // Edit selected tasks
         for id in task_ids {
-            edit_count += task_list.edit_task(id);
+            if details_only {
+                task_list.edit_task_details(id);
+            } else {
+                task_list.edit_task(id);
+            }
+            edit_count += 1;
         }
     }
     Ok(edit_count)

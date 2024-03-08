@@ -142,6 +142,49 @@ impl Task {
 
         Ok(())
     }
+
+    /// Invoke the default editor to edit the task
+    pub fn invoke_editor_for_details(&mut self) -> Result<(), io::Error> {
+        // let serialized = serde_json::to_string_pretty(&self)?;
+
+        // Create a temporary file
+        let mut temp_file = tempfile::Builder::new().suffix(".txt").tempfile()?;
+
+        // Write some content to the temporary file
+        writeln!(temp_file, "{}", self.details)?;
+
+        // Get the path to the temporary file
+        let file_path = temp_file.path();
+
+        // Determine the default editor based on the environment variables
+        let editor = env::var("EDITOR").unwrap_or_else(|_| "nano".to_string());
+
+        if !cfg!(test) {
+            // Invoke the default editor to open the temporary file,
+            // as long as we're not running tests
+            Command::new(editor)
+                .arg(file_path)
+                .status()
+                .expect("Failed to open the editor");
+        }
+
+        // Reopen the temporary file for reading
+        let file_path = temp_file.path();
+        let mut file = File::open(file_path)?;
+
+        // Read the entire contents into a buffer
+        let mut updates = String::new();
+        file.read_to_string(&mut updates)?;
+        self.details = updates.trim().to_string();
+
+        // Deserialize the buffer into a Task.  If it can't be parsed,
+        // default to the original task values
+        // let updated_descripiton: Task = serde_json::from_str(&updates).unwrap_or(self.clone());
+        // self.update_from(&updated_task);
+
+        Ok(())
+    }
+
 }
 
 
