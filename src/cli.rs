@@ -4,7 +4,6 @@ use crate::tasklist;
 use clap::{Parser, Subcommand, ArgAction};
 use colored::{ColoredString, Colorize};
 use chrono::Local;
-use shellexpand;
 
 trait ColoredStringExt {
     fn slate_blue(self) -> ColoredString;
