@@ -49,6 +49,7 @@ impl TaskList {
         self.tasks.len()
     }
 
+    /// Clone a task
     pub fn copy_task(&mut self, id: String) -> Option<Task> {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
@@ -63,7 +64,7 @@ impl TaskList {
         Some(task.clone())
     }
 
-
+    /// Wake any tasks whose snooze timer has expired
     pub fn wake_tasks(&mut self) -> usize {
         let mut num_woken = 0;
         let now = Local::now();
