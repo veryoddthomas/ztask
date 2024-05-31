@@ -1,11 +1,9 @@
 use std::fs::File;
 use std::io::{self, Write};
 use std::fs;
-// use std::collections::VecDeque;
 use std::collections::{BinaryHeap, BTreeSet};
 use crate::task::{Task, TaskStatus};
 use parse_duration::parse;
-// use std::time::Duration;
 use chrono::Local;
 
 pub struct TaskList {
@@ -115,12 +113,6 @@ impl TaskList {
         self.tasks = updated_tasks;
         num_unblocked
     }
-
-    // #[cfg(test)]
-    // /// Clears the TaskList, removing all Tasks.
-    // pub fn clear(&mut self) {
-    //     self.tasks.clear()
-    // }
 
     /// Save the task list to the database file.
     pub fn save(&self) -> Result<(), io::Error> {
@@ -282,136 +274,6 @@ impl TaskList {
         self.tasks.push(updated_task);
         1
     }
-
-    // pub fn get_task(&self, id: String) -> Option<&Task> {
-    //     self.tasks.iter().find(|task| task.id == id)
-    // }
-
-    // pub fn get_tasks_by_category(&self, category: &str) -> BinaryHeap<&Task> {
-    //     self.tasks.iter().filter(|task| task.category == category).collect()
-    // }
-
-    // pub fn get_tasks_by_summary(&self, summary: &str) -> BinaryHeap<&Task> {
-    //     self.tasks.iter().filter(|task| task.summary == summary).collect()
-    // }
-
-    // pub fn get_tasks_by_summary_and_category(&self, summary: &str, category: &str) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.category == category)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_category_and_summary(&self, summary: &str, category: &str) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.category == category)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_summary_and_category_and_date(
-    //     &self,
-    //     summary: &str,
-    //     category: &str,
-    //     date: &DateTime<Utc>,
-    // ) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.category == category && task.created_at == date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_category_and_summary_and_date(
-    //     &self,
-    //     summary: &str,
-    //     category: &str,
-    //     date: &DateTime<Utc>,
-    // ) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.category == category && task.created_at == date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_summary_and_date(&self, summary: &str, date: &DateTime<Utc>) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.created_at == date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_category_and_date(&self, category: &str, date: &DateTime<Utc>) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.category == category && task.created_at == date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_date(&self, date: &DateTime<Utc>) -> BinaryHeap<&Task> {
-    //     self.tasks.iter().filter(|task| task.created_at == date).collect()
-    // }
-
-    // pub fn get_tasks_by_summary_and_category_and_date_range(
-    //     &self,
-    //     summary: &str,
-    //     category: &str,
-    //     start_date: &DateTime<Utc>,
-    //     end_date: &DateTime<Utc>,
-    // ) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_category_and_summary_and_date_range(
-    //     &self,
-    //     summary: &str,
-    //     category: &str,
-    //     start_date: &DateTime<Utc>,
-    //     end_date: &DateTime<Utc>,
-    // ) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.category == category && task.created_at >= start_date && task.created_at <= end_date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_summary_and_date_range(&self, summary: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.created_at >= start_date && task.created_at <= end_date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_category_and_date_range(&self, category: &str, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.category == category && task.created_at >= start_date && task.created_at <= end_date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_date_range(&self, start_date: &DateTime<Utc>, end_date: &DateTime<Utc>) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.created_at >= start_date && task.created_at <= end_date)
-    //        .collect()
-    // }
-
-    // pub fn get_tasks_by_summary_and_category_and_date_range_and_time_range(
-    //     &self,
-    //     summary: &str,
-    //     category: &str,
-    //     start_date: &DateTime<Utc>,
-    //     end_date: &DateTime<Utc>,
-    //     start_time: &DateTime<Utc>,
-    //     end_time: &DateTime<Utc>,
-    // ) -> BinaryHeap<&Task> {
-    //     self.tasks
-    //        .iter()
-    //        .filter(|task| task.summary == summary && task.category == category && task.created_at >= start_date && task.created_at <= end_date && task.created_at >= start_time && task.created_at <= end_time)
-    //        .collect()
-    // }
 }
 
 
