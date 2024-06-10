@@ -96,12 +96,12 @@ impl Task {
     fn update_from(&mut self, other: &Task) {
         assert_eq!(self.id, other.id);
         self.priority = other.priority;
-        self.summary = other.summary.clone();
-        self.details = other.details.clone();
-        self.category = other.category.clone();
-        self.status = other.status.clone();
-        self.blocked_by = other.blocked_by.clone();
-        self.wake_at = other.wake_at;
+        self.summary.clone_from(&other.summary);
+        self.details.clone_from(&other.details);
+        self.category.clone_from(&other.category);
+        self.status.clone_from(&other.status);
+        self.blocked_by.clone_from(&other.blocked_by);
+        self.wake_at.clone_from(&other.wake_at);
     }
 
     pub fn block_on(&mut self, blocker_id: String) {

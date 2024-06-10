@@ -914,7 +914,7 @@ mod tests {
     fn verify_delete_nonexisting() {
         let db = __create_temp_db(0);
         let id = "invalid";
-        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del", &id]);
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del", id]);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
