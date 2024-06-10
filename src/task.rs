@@ -10,11 +10,16 @@ use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum TaskStatus {
-    #[serde(rename = "active")]    Active,
-    #[serde(rename = "backlog")]   Backlog,
-    #[serde(rename = "blocked")]   Blocked,
-    #[serde(rename = "sleeping")]  Sleeping,  // Would Snoozed be better?
-    #[serde(rename = "completed")] Completed,
+    #[serde(rename = "active")]
+    Active,
+    #[serde(rename = "backlog")]
+    Backlog,
+    #[serde(rename = "blocked")]
+    Blocked,
+    #[serde(rename = "sleeping")]
+    Sleeping, // Would Snoozed be better?
+    #[serde(rename = "completed")]
+    Completed,
 }
 
 impl std::fmt::Display for TaskStatus {
@@ -55,7 +60,9 @@ impl Ord for Task {
         // In case of a priority tie we compare created_at - this step
         // is necessary to make implementations of `PartialEq` and
         // `Ord` consistent.
-        other.status.cmp(&self.status)
+        other
+            .status
+            .cmp(&self.status)
             .then_with(|| other.priority.cmp(&self.priority))
             .then_with(|| other.created_at.cmp(&self.created_at))
     }
@@ -184,10 +191,7 @@ impl Task {
 
         Ok(())
     }
-
 }
-
-
 
 // xref: /usr/local/develop/rust-commandline-example/src/main.rs
 

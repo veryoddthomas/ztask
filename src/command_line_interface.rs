@@ -1,27 +1,29 @@
-use std::error::Error;
 use crate::task::{Task, TaskStatus};
 use crate::tasklist;
-use clap::{Parser, Subcommand, ArgAction};
-use colored::{ColoredString, Colorize};
 use chrono::Local;
+use clap::{ArgAction, Parser, Subcommand};
+use colored::{ColoredString, Colorize};
+use std::error::Error;
 
 trait ColoredStringExt {
     fn slate_blue(self) -> ColoredString;
 }
 
 impl ColoredStringExt for String {
-    fn slate_blue(self) -> ColoredString { self.truecolor(26, 126, 165) }
+    fn slate_blue(self) -> ColoredString {
+        self.truecolor(26, 126, 165)
+    }
 }
 
 /// Default database path
 // const DB_PATH: &str = "./data/db.json";
 const DB_PATH: &str = "$HOME/.ztask/taskdb.json";
 
-#[derive(Parser,Default,Debug)]
-#[clap(name="ZTask", author="Tom Zakrajsek", version, about)]
-/// A very simple Task Manager
-pub struct Arguments {
+#[derive(Parser, Default, Debug)]
+#[clap(name = "ZTask", author = "Tom Zakrajsek", version, about)]
 
+/// Command line arguments the user passes when invoking the application
+pub struct Arguments {
     #[command(subcommand)]
     command: Option<Command>,
 
@@ -135,7 +137,7 @@ fn create_path(file_path: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
+pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
     let args = arg_overrides.unwrap_or(Arguments::parse());
     let db_path = shellexpand::env(&args.db)?;
     create_path(&db_path)?;
@@ -143,76 +145,122 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
 
     if let Some(subcmd) = args.command {
         match subcmd {
-            Command::List { verbose } => match process_list(&mut task_list, std::cmp::max(args.verbose, verbose), true) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) found", c)
-                },
-                Err(e) => eprintln!("error in processing : {}", e),
-            },
-            Command::Show { task_ids , verbose } => match process_show(&mut task_list, std::cmp::max(args.verbose, verbose), task_ids.unwrap_or_default()) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) updated", c)
-                },
-                Err(e) => eprintln!("error in processing : {}", e),
-            },
-            Command::Add { task_names, is_interrupt , edit} =>
-                match process_add(&mut task_list, task_names.unwrap_or_default(), is_interrupt) {
-                    Ok(ids) => {
-                        if args.verbose > 0 { println!("created task(s) {:?}", ids); }
-                        if edit {
-                            // Invoke editor on each new task
-                            match process_edit(&mut task_list, ids, false) {
-                                Ok(c) => if args.verbose > 0 {
-                                    println!("edited {} task(s)", c);
-                                },
-                                Err(e) => eprintln!("error in processing : {}", e),
-                            }
+            Command::List { verbose } => {
+                match process_list(&mut task_list, std::cmp::max(args.verbose, verbose), true) {
+                    Ok(c) => {
+                        if args.verbose > 0 {
+                            println!("{} task(s) found", c)
                         }
-                    },
+                    }
                     Err(e) => eprintln!("error in processing : {}", e),
-            },
-            Command::Start { task_ids } => match process_start(&mut task_list, task_ids.unwrap_or_default()) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) started", c)
-                },
+                }
+            }
+            Command::Show { task_ids, verbose } => match process_show(
+                &mut task_list,
+                std::cmp::max(args.verbose, verbose),
+                task_ids.unwrap_or_default(),
+            ) {
+                Ok(c) => {
+                    if args.verbose > 0 {
+                        println!("{} task(s) updated", c)
+                    }
+                }
                 Err(e) => eprintln!("error in processing : {}", e),
             },
-            Command::Stop { task_ids } => match process_stop(&mut task_list, task_ids.unwrap_or_default()) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) stopped", c)
-                },
+            Command::Add {
+                task_names,
+                is_interrupt,
+                edit,
+            } => match process_add(&mut task_list, task_names.unwrap_or_default(), is_interrupt) {
+                Ok(ids) => {
+                    if args.verbose > 0 {
+                        println!("created task(s) {:?}", ids);
+                    }
+                    if edit {
+                        // Invoke editor on each new task
+                        match process_edit(&mut task_list, ids, false) {
+                            Ok(c) => {
+                                if args.verbose > 0 {
+                                    println!("edited {} task(s)", c);
+                                }
+                            }
+                            Err(e) => eprintln!("error in processing : {}", e),
+                        }
+                    }
+                }
                 Err(e) => eprintln!("error in processing : {}", e),
             },
-            Command::Sleep { task_ids, duration } => match process_sleep(&mut task_list, task_ids.unwrap_or_default(), duration) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) suspended", c)
-                },
+            Command::Start { task_ids } => {
+                match process_start(&mut task_list, task_ids.unwrap_or_default()) {
+                    Ok(c) => {
+                        if args.verbose > 0 {
+                            println!("{} task(s) started", c)
+                        }
+                    }
+                    Err(e) => eprintln!("error in processing : {}", e),
+                }
+            }
+            Command::Stop { task_ids } => {
+                match process_stop(&mut task_list, task_ids.unwrap_or_default()) {
+                    Ok(c) => {
+                        if args.verbose > 0 {
+                            println!("{} task(s) stopped", c)
+                        }
+                    }
+                    Err(e) => eprintln!("error in processing : {}", e),
+                }
+            }
+            Command::Sleep { task_ids, duration } => {
+                match process_sleep(&mut task_list, task_ids.unwrap_or_default(), duration) {
+                    Ok(c) => {
+                        if args.verbose > 0 {
+                            println!("{} task(s) suspended", c)
+                        }
+                    }
+                    Err(e) => eprintln!("error in processing : {}", e),
+                }
+            }
+            Command::Del { task_ids } => {
+                match process_del(&mut task_list, task_ids.unwrap_or_default()) {
+                    Ok(c) => {
+                        if args.verbose > 0 {
+                            println!("{} task(s) removed", c)
+                        }
+                    }
+                    Err(e) => eprintln!("error in processing : {}", e),
+                }
+            }
+            Command::Edit {
+                task_ids,
+                details_only,
+            } => match process_edit(&mut task_list, task_ids.unwrap_or_default(), details_only) {
+                Ok(c) => {
+                    if args.verbose > 0 {
+                        println!("{} task(s) updated", c)
+                    }
+                }
                 Err(e) => eprintln!("error in processing : {}", e),
             },
-            Command::Del { task_ids } => match process_del(&mut task_list, task_ids.unwrap_or_default()) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) removed", c)
-                },
-                Err(e) => eprintln!("error in processing : {}", e),
-            },
-            Command::Edit { task_ids, details_only } => match process_edit(&mut task_list, task_ids.unwrap_or_default(), details_only) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) updated", c)
-                },
-                Err(e) => eprintln!("error in processing : {}", e),
-            },
-            Command::Block { task_ids } => match process_block_on(&mut task_list, task_ids.unwrap_or_default()) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) updated", c)
-                },
-                Err(e) => eprintln!("error in processing : {}", e),
-            },
-            Command::Complete { task_ids } => match process_complete(&mut task_list, task_ids.unwrap_or_default()) {
-                Ok(c) => if args.verbose > 0 {
-                    println!("{} task(s) updated", c)
-                },
-                Err(e) => eprintln!("error in processing : {}", e),
-            },
+            Command::Block { task_ids } => {
+                match process_block_on(&mut task_list, task_ids.unwrap_or_default()) {
+                    Ok(c) => {
+                        if args.verbose > 0 {
+                            println!("{} task(s) updated", c)
+                        }
+                    }
+                    Err(e) => eprintln!("error in processing : {}", e),
+                }
+            }
+            Command::Complete { task_ids } => {
+                match process_complete(&mut task_list, task_ids.unwrap_or_default()) {
+                    Ok(c) => {
+                        if args.verbose > 0 {
+                            println!("{} task(s) updated", c)
+                        }
+                    }
+                    Err(e) => eprintln!("error in processing : {}", e),
+                }
+            }
         }
     } else {
         // No subcommand, so just list the active task
@@ -225,13 +273,19 @@ pub fn run(arg_overrides:Option<Arguments>) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn process_show(task_list: &mut tasklist::TaskList, verbosity: u8, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_show(
+    task_list: &mut tasklist::TaskList,
+    verbosity: u8,
+    task_ids: Vec<String>,
+) -> Result<usize, Box<dyn Error>> {
     let mut processed_task_count = 0;
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
 
-        if tasks.is_empty() { return Ok(0) }
+        if tasks.is_empty() {
+            return Ok(0);
+        }
 
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
@@ -258,14 +312,20 @@ fn process_show(task_list: &mut tasklist::TaskList, verbosity: u8, task_ids: Vec
     Ok(processed_task_count)
 }
 
-fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8, show_all: bool) -> Result<usize, Box<dyn Error>> {
+fn process_list(
+    task_list: &mut tasklist::TaskList,
+    verbosity: u8,
+    show_all: bool,
+) -> Result<usize, Box<dyn Error>> {
     if show_all {
         print_categorized_task_list(task_list, verbosity);
     } else {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
 
-        if tasks.is_empty() { return Ok(0) }
+        if tasks.is_empty() {
+            return Ok(0);
+        }
 
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
@@ -285,9 +345,19 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
     show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
     show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
     show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
-    show_list("Completed Tasks", TaskStatus::Completed, task_list, verbosity);
+    show_list(
+        "Completed Tasks",
+        TaskStatus::Completed,
+        task_list,
+        verbosity,
+    );
 
-    fn show_list(heading: &str, status: TaskStatus, task_list: &tasklist::TaskList, _verbosity: u8) {
+    fn show_list(
+        heading: &str,
+        status: TaskStatus,
+        task_list: &tasklist::TaskList,
+        _verbosity: u8,
+    ) {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == status);
         let mut tasks = tasks.into_sorted_vec();
@@ -311,8 +381,7 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
 
         if !tasks.is_empty() {
             for task in tasks {
-                print_task_oneline_with_format_override(
-                    &task, fn_format);
+                print_task_oneline_with_format_override(&task, fn_format);
                 // print_task_oneline(&task, true);
             }
         }
@@ -332,12 +401,14 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
     let blocked = if task.blocked_by.is_empty() {
         set_color("")
     } else {
-        set_color(&format!("[{}]",
+        set_color(&format!(
+            "[{}]",
             task.blocked_by
-                    .iter()
-                    .map(|s| &s[..9])
-                    .collect::<Vec<_>>()
-                    .join(", ")))
+                .iter()
+                .map(|s| &s[..9])
+                .collect::<Vec<_>>()
+                .join(", ")
+        ))
     };
     let wake_at = if task.wake_at.is_none() {
         set_color("")
@@ -357,7 +428,7 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
 
         let days = total_seconds / (60 * 60 * 24);
         let hours = (total_seconds / (60 * 60)) % 24;
-        let minutes = (total_seconds / 60) %  60;
+        let minutes = (total_seconds / 60) % 60;
         let seconds = total_seconds % 60;
 
         let mut duration_fragments: Vec<String> = vec![];
@@ -411,19 +482,29 @@ fn print_task_oneline(task: &Task, show_status: bool) {
 
     print!("  {}", id);
     print!("  {}", priority);
-    if show_status { print!("  {}", task.status.to_string().bright_black()); }
-    if show_date { print!("  {}", task.created_at.format("%F").to_string().bright_black()); }
+    if show_status {
+        print!("  {}", task.status.to_string().bright_black());
+    }
+    if show_date {
+        print!(
+            "  {}",
+            task.created_at.format("%F").to_string().bright_black()
+        );
+    }
 
     // let summary = task.summary.to_string().bright_black();
     let blocked = if task.blocked_by.is_empty() {
         "".bright_red()
     } else {
-        format!("[{}]",
+        format!(
+            "[{}]",
             task.blocked_by
                 .iter()
                 .map(|s| &s[..9])
                 .collect::<Vec<_>>()
-                .join(", ")).bright_red()
+                .join(", ")
+        )
+        .bright_red()
     };
 
     print!("  {}  {}", task.summary.to_string().white(), blocked);
@@ -434,32 +515,58 @@ pub fn print_task_detailed(task: &Task) {
     let blocked = if task.blocked_by.is_empty() {
         "".to_string().slate_blue()
     } else {
-        task
-            .blocked_by
+        task.blocked_by
             .iter()
             .map(|s| &s[..9])
             .collect::<Vec<_>>()
-            .join(", ").slate_blue()
+            .join(", ")
+            .slate_blue()
     };
 
     let width = 11;
-    println!("  {:width$} {}", "summary:".bright_white(), task.summary.to_string().bright_black());
-    println!("  {:width$} {}", "id:".bright_white(), &task.id[0..9].to_string().bright_black());
-    println!("  {:width$} {}", "priority:".bright_white(), task.priority.to_string().bright_black());
-    println!("  {:width$} {}", "status:".bright_white(), task.status.to_string().bright_black());
-    println!("  {:width$} {}", "created:".bright_white(), task.created_at.format("%F %T").to_string().bright_black());
+    println!(
+        "  {:width$} {}",
+        "summary:".bright_white(),
+        task.summary.to_string().bright_black()
+    );
+    println!(
+        "  {:width$} {}",
+        "id:".bright_white(),
+        &task.id[0..9].to_string().bright_black()
+    );
+    println!(
+        "  {:width$} {}",
+        "priority:".bright_white(),
+        task.priority.to_string().bright_black()
+    );
+    println!(
+        "  {:width$} {}",
+        "status:".bright_white(),
+        task.status.to_string().bright_black()
+    );
+    println!(
+        "  {:width$} {}",
+        "created:".bright_white(),
+        task.created_at.format("%F %T").to_string().bright_black()
+    );
     if task.status == TaskStatus::Blocked {
         println!("  {:width$} {}", "blocked by:".bright_white(), blocked);
     }
     if !task.details.is_empty() {
         // let details = str::replace(&task.details, "!", "?");
-        let details = task.details.replace( '\n', &format!("\n  {:width$} ", ""));
-        println!("  {:width$} {}", "details:".bright_white(), details.bright_black());
+        let details = task.details.replace('\n', &format!("\n  {:width$} ", ""));
+        println!(
+            "  {:width$} {}",
+            "details:".bright_white(),
+            details.bright_black()
+        );
     }
 }
 
-
-fn process_block_on(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_block_on(
+    task_list: &mut tasklist::TaskList,
+    task_ids: Vec<String>,
+) -> Result<usize, Box<dyn Error>> {
     let mut blocker_count = 0;
     if task_ids.is_empty() {
         // TODO: Should this prompt for which to block on?
@@ -476,13 +583,18 @@ fn process_block_on(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -
     Ok(blocker_count)
 }
 
-fn process_complete(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_complete(
+    task_list: &mut tasklist::TaskList,
+    task_ids: Vec<String>,
+) -> Result<usize, Box<dyn Error>> {
     let mut completed_count = 0;
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
 
-        if tasks.is_empty() { return Ok(0) }
+        if tasks.is_empty() {
+            return Ok(0);
+        }
 
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
@@ -497,16 +609,25 @@ fn process_complete(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -
     Ok(completed_count)
 }
 
-fn process_start(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_start(
+    task_list: &mut tasklist::TaskList,
+    task_ids: Vec<String>,
+) -> Result<usize, Box<dyn Error>> {
     let mut completed_count = 0;
     if task_ids.is_empty() {
-        let count_active = task_list.tasks.iter().filter(|task| task.status == TaskStatus::Active).count();
+        let count_active = task_list
+            .tasks
+            .iter()
+            .filter(|task| task.status == TaskStatus::Active)
+            .count();
 
         if count_active == 0 {
             let mut tasks = task_list.tasks.clone();
             tasks.retain(|task| task.status == TaskStatus::Backlog);
 
-            if tasks.is_empty() { return Ok(0) }
+            if tasks.is_empty() {
+                return Ok(0);
+            }
 
             let mut tasks = tasks.into_sorted_vec();
             let task = tasks.remove(0);
@@ -523,10 +644,17 @@ fn process_start(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> R
     Ok(completed_count)
 }
 
-fn process_stop(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_stop(
+    task_list: &mut tasklist::TaskList,
+    task_ids: Vec<String>,
+) -> Result<usize, Box<dyn Error>> {
     let mut completed_count = 0;
     if task_ids.is_empty() {
-        let count_active = task_list.tasks.iter().filter(|task| task.status == TaskStatus::Active).count();
+        let count_active = task_list
+            .tasks
+            .iter()
+            .filter(|task| task.status == TaskStatus::Active)
+            .count();
 
         if count_active != 0 {
             let mut tasks = task_list.tasks.clone();
@@ -548,13 +676,19 @@ fn process_stop(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Re
     Ok(completed_count)
 }
 
-fn process_sleep(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, duration: String) -> Result<usize, Box<dyn Error>> {
+fn process_sleep(
+    task_list: &mut tasklist::TaskList,
+    task_ids: Vec<String>,
+    duration: String,
+) -> Result<usize, Box<dyn Error>> {
     let mut suspended_count = 0;
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
 
-        if tasks.is_empty() { return Ok(0) }
+        if tasks.is_empty() {
+            return Ok(0);
+        }
 
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
@@ -569,13 +703,19 @@ fn process_sleep(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, dura
     Ok(suspended_count)
 }
 
-fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, details_only: bool) -> Result<usize, Box<dyn Error>> {
+fn process_edit(
+    task_list: &mut tasklist::TaskList,
+    task_ids: Vec<String>,
+    details_only: bool,
+) -> Result<usize, Box<dyn Error>> {
     let mut edit_count = 0;
     if task_ids.is_empty() {
         let mut tasks = task_list.tasks.clone();
         tasks.retain(|task| task.status == TaskStatus::Active);
 
-        if tasks.is_empty() { return Ok(0) }
+        if tasks.is_empty() {
+            return Ok(0);
+        }
 
         let mut tasks = tasks.into_sorted_vec();
         let task = tasks.remove(0);
@@ -599,7 +739,10 @@ fn process_edit(task_list: &mut tasklist::TaskList, task_ids: Vec<String>, detai
     Ok(edit_count)
 }
 
-fn process_del(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Result<usize, Box<dyn Error>> {
+fn process_del(
+    task_list: &mut tasklist::TaskList,
+    task_ids: Vec<String>,
+) -> Result<usize, Box<dyn Error>> {
     let prior_task_count = task_list.tasks.len();
     if task_ids.is_empty() {
         // Remove last task
@@ -613,11 +756,15 @@ fn process_del(task_list: &mut tasklist::TaskList, task_ids: Vec<String>) -> Res
     Ok(prior_task_count - task_list.tasks.len())
 }
 
-fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, is_interrupt: bool) -> Result<Vec<String>, Box<dyn Error>> {
+fn process_add(
+    task_list: &mut tasklist::TaskList,
+    new_task_names: Vec<String>,
+    is_interrupt: bool,
+) -> Result<Vec<String>, Box<dyn Error>> {
     let mut created_task_ids: Vec<String> = Vec::new();
     if new_task_names.is_empty() {
         // Create default task with default name
-        let default_task_name = format!("New task #{count}", count=task_list.num_tasks() + 1);
+        let default_task_name = format!("New task #{count}", count = task_list.num_tasks() + 1);
         let new_task = Task::new(default_task_name, "quick".to_string(), is_interrupt);
         created_task_ids.push(new_task.id.clone());
         print_task_oneline(&new_task, true);
@@ -626,7 +773,10 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, 
         // Create new tasks with provided names
         if new_task_names.len() > 1 {
             // If they are all single word, consider this as a single task
-            let count_multi_word = new_task_names.iter().filter(|name| name.contains(' ')).count();
+            let count_multi_word = new_task_names
+                .iter()
+                .filter(|name| name.contains(' '))
+                .count();
             if count_multi_word == 0 {
                 // All task names are single word
                 // Create single task with those task names
@@ -655,7 +805,6 @@ fn process_add(task_list: &mut tasklist::TaskList, new_task_names: Vec<String>, 
     }
     // return number of tasks added
     Ok(created_task_ids)
-
 }
 
 #[cfg(test)]
@@ -677,9 +826,7 @@ mod tests {
     #[test]
     fn verify_command_list() {
         let db = __create_temp_db(5);
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "list"]
-        );
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "list"]);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
@@ -690,9 +837,7 @@ mod tests {
     #[test]
     fn verify_add_default() {
         let db = __create_temp_db(0);
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "add"]
-        );
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "add"]);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
@@ -701,9 +846,8 @@ mod tests {
     #[test]
     fn verify_add_single() {
         let db = __create_temp_db(0);
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "add", "test task"]
-        );
+        let args: Arguments =
+            Arguments::parse_from(["ztask", "--db", &db, "-v", "add", "test task"]);
         // Should create 1 task with name "test task"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
@@ -713,9 +857,17 @@ mod tests {
     #[test]
     fn verify_add_multiple() {
         let db = __create_temp_db(0);
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "add", "test task #1", "test task #2", "task3", "task4"]
-        );
+        let args: Arguments = Arguments::parse_from([
+            "ztask",
+            "--db",
+            &db,
+            "-v",
+            "add",
+            "test task #1",
+            "test task #2",
+            "task3",
+            "task4",
+        ]);
         // Should create 4 tasks with names "test task #1", "test task #2", "task3", "task4"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
@@ -725,9 +877,9 @@ mod tests {
     #[test]
     fn verify_add_with_word_merge() {
         let db = __create_temp_db(0);
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "add", "create", "single", "task"]
-        );
+        let args: Arguments = Arguments::parse_from([
+            "ztask", "--db", &db, "-v", "add", "create", "single", "task",
+        ]);
         // Should create 1 task with name "create single task"
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
@@ -739,9 +891,7 @@ mod tests {
     #[test]
     fn verify_delete_default() {
         let db = __create_temp_db(0);
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "del"]
-        );
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del"]);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
@@ -753,9 +903,7 @@ mod tests {
         let task_list = tasklist::TaskList::new(db.clone());
         let mut iter = task_list.tasks.iter().skip(1);
         let id = iter.next().unwrap().id.clone();
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "del", &id]
-        );
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del", &id]);
         drop(task_list);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
@@ -766,9 +914,7 @@ mod tests {
     fn verify_delete_nonexisting() {
         let db = __create_temp_db(0);
         let id = "invalid";
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "del", &id]
-        );
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del", &id]);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
@@ -779,9 +925,7 @@ mod tests {
     #[test]
     fn verify_edit_default() {
         let db = __create_temp_db(0);
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "edit"]
-        );
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "edit"]);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
@@ -793,9 +937,7 @@ mod tests {
         let task_list = tasklist::TaskList::new(db.clone());
         let mut iter = task_list.tasks.iter().skip(1);
         let id = iter.next().unwrap().id.clone();
-        let args: Arguments = Arguments::parse_from(
-            ["ztask", "--db", &db, "-v", "edit", &id]
-        );
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "edit", &id]);
         drop(task_list);
         println!("args: {:?}", args);
         run(Some(args)).unwrap();

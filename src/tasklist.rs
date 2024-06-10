@@ -1,10 +1,10 @@
+use crate::task::{Task, TaskStatus};
+use chrono::Local;
+use parse_duration::parse;
+use std::collections::{BTreeSet, BinaryHeap};
+use std::fs;
 use std::fs::File;
 use std::io::{self, Write};
-use std::fs;
-use std::collections::{BinaryHeap, BTreeSet};
-use crate::task::{Task, TaskStatus};
-use parse_duration::parse;
-use chrono::Local;
 
 pub struct TaskList {
     pub tasks: BinaryHeap<Task>,
@@ -36,9 +36,10 @@ impl TaskList {
                 }
                 task_list
             }
-            Err(_) => {
-                TaskList { tasks: BinaryHeap::new(), db_path }
-            }
+            Err(_) => TaskList {
+                tasks: BinaryHeap::new(),
+                db_path,
+            },
         }
     }
 
@@ -51,13 +52,20 @@ impl TaskList {
     pub fn copy_task(&mut self, id: String) -> Option<Task> {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
-        if match_count !=1 {
-            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
             return None;
         }
 
         // There will be only one match, so unwrap is safe
-        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let task = self
+            .tasks
+            .iter()
+            .find(|task| task.id[0..id.len()] == id)
+            .unwrap();
 
         Some(task.clone())
     }
@@ -89,10 +97,11 @@ impl TaskList {
     pub fn unblock_tasks(&mut self) -> usize {
         let mut num_unblocked = 0;
 
-        let blocking_capable_ids: BTreeSet<String> =
-        self.tasks.iter()
+        let blocking_capable_ids: BTreeSet<String> = self
+            .tasks
+            .iter()
             .filter(|task| task.status != TaskStatus::Completed)
-            .map(|task|task.id.clone())
+            .map(|task| task.id.clone())
             .collect();
 
         // let updated_tasks = self.tasks.clone().into_sorted_vec();
@@ -101,7 +110,11 @@ impl TaskList {
         // Process every node in the BinaryHeap
         while let Some(mut task) = self.tasks.pop() {
             if task.status == TaskStatus::Blocked {
-                let intersection: BTreeSet<_> = task.blocked_by.intersection(&blocking_capable_ids).cloned().collect();
+                let intersection: BTreeSet<_> = task
+                    .blocked_by
+                    .intersection(&blocking_capable_ids)
+                    .cloned()
+                    .collect();
                 task.blocked_by = intersection;
                 if task.blocked_by.is_empty() {
                     task.status = TaskStatus::Backlog;
@@ -140,9 +153,16 @@ impl TaskList {
     pub fn remove_task(&mut self, id: String) {
         // If we don't find exactly one task that starts with 'id',
         // print a warning and return
-        let match_count = self.tasks.iter().filter(|task| task.id[0..id.len()] == id).count();
-        if match_count !=1 {
-            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+        let match_count = self
+            .tasks
+            .iter()
+            .filter(|task| task.id[0..id.len()] == id)
+            .count();
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
             return;
         }
         self.tasks.retain(|task| task.id[0..id.len()] != id)
@@ -152,19 +172,41 @@ impl TaskList {
     pub fn block_task_on(&mut self, blockee_id: &String, blocker_id: &String) -> usize {
         // If we don't find exactly one task that starts with 'id',
         // print a warning and return
-        let blockee_match_count = self.tasks.iter().filter(|task| &task.id[0..blockee_id.len()] == blockee_id).count();
-        if blockee_match_count !=1 {
-            println!("Blockee Id '{}' does not uniquely match one task.  It matches {}", blockee_id, blockee_match_count);
+        let blockee_match_count = self
+            .tasks
+            .iter()
+            .filter(|task| &task.id[0..blockee_id.len()] == blockee_id)
+            .count();
+        if blockee_match_count != 1 {
+            println!(
+                "Blockee Id '{}' does not uniquely match one task.  It matches {}",
+                blockee_id, blockee_match_count
+            );
             return 0;
         }
-        let blocker_match_count = self.tasks.iter().filter(|task| &task.id[0..blocker_id.len()] == blocker_id).count();
-        if blocker_match_count !=1 {
-            println!("Blocker Id '{}' does not uniquely match one task.  It matches {}", blocker_id, blocker_match_count);
+        let blocker_match_count = self
+            .tasks
+            .iter()
+            .filter(|task| &task.id[0..blocker_id.len()] == blocker_id)
+            .count();
+        if blocker_match_count != 1 {
+            println!(
+                "Blocker Id '{}' does not uniquely match one task.  It matches {}",
+                blocker_id, blocker_match_count
+            );
             return 0;
         }
         // There will be only one match, so unwrap is safe
-        let blockee = self.tasks.iter().find(|task| &task.id[0..blockee_id.len()] == blockee_id).unwrap();
-        let blocker = self.tasks.iter().find(|task| &task.id[0..blocker_id.len()] == blocker_id).unwrap();
+        let blockee = self
+            .tasks
+            .iter()
+            .find(|task| &task.id[0..blockee_id.len()] == blockee_id)
+            .unwrap();
+        let blocker = self
+            .tasks
+            .iter()
+            .find(|task| &task.id[0..blocker_id.len()] == blocker_id)
+            .unwrap();
 
         let mut updated_task = blockee.clone();
         updated_task.block_on(blocker.id.clone());
@@ -173,7 +215,6 @@ impl TaskList {
         self.tasks.retain(|task| task.id != id);
         self.tasks.push(updated_task);
 
-
         1
     }
 
@@ -181,15 +222,22 @@ impl TaskList {
     pub fn edit_task(&mut self, id: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
-        if match_count !=1 {
-            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
             return 0;
         }
 
         // There will be only one match, so unwrap is safe
-        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let task = self
+            .tasks
+            .iter()
+            .find(|task| task.id[0..id.len()] == id)
+            .unwrap();
         let mut updated_task = task.clone();
-        updated_task.invoke_editor().unwrap_or_default();  // TODO: Handle errors
+        updated_task.invoke_editor().unwrap_or_default(); // TODO: Handle errors
         let id = task.id.clone();
         self.tasks.retain(|task| task.id != id);
         self.tasks.push(updated_task);
@@ -200,15 +248,22 @@ impl TaskList {
     pub fn edit_task_details(&mut self, id: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
-        if match_count !=1 {
-            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
             return 0;
         }
 
         // There will be only one match, so unwrap is safe
-        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let task = self
+            .tasks
+            .iter()
+            .find(|task| task.id[0..id.len()] == id)
+            .unwrap();
         let mut updated_task = task.clone();
-        updated_task.invoke_editor_for_details().unwrap_or_default();  // TODO: Handle errors
+        updated_task.invoke_editor_for_details().unwrap_or_default(); // TODO: Handle errors
         let id = task.id.clone();
         self.tasks.retain(|task| task.id != id);
         self.tasks.push(updated_task);
@@ -219,13 +274,20 @@ impl TaskList {
     pub fn complete_task(&mut self, id: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
-        if match_count !=1 {
-            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
             return 0;
         }
 
         // There will be only one match, so unwrap is safe
-        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let task = self
+            .tasks
+            .iter()
+            .find(|task| task.id[0..id.len()] == id)
+            .unwrap();
         let mut updated_task = task.clone();
         updated_task.status = TaskStatus::Completed;
         let id = task.id.clone();
@@ -238,13 +300,20 @@ impl TaskList {
     pub fn start_task(&mut self, id: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
-        if match_count !=1 {
-            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
             return 0;
         }
 
         // There will be only one match, so unwrap is safe
-        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let task = self
+            .tasks
+            .iter()
+            .find(|task| task.id[0..id.len()] == id)
+            .unwrap();
         let mut updated_task = task.clone();
         updated_task.status = TaskStatus::Active;
         let id = task.id.clone();
@@ -257,13 +326,20 @@ impl TaskList {
     pub fn suspend_task(&mut self, id: String, duration: String) -> usize {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
-        if match_count !=1 {
-            println!("Id '{}' does not uniquely match one task.  It matches {}", id, match_count);
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
             return 0;
         }
 
         // There will be only one match, so unwrap is safe
-        let task = self.tasks.iter().find(|task| task.id[0..id.len()] == id).unwrap();
+        let task = self
+            .tasks
+            .iter()
+            .find(|task| task.id[0..id.len()] == id)
+            .unwrap();
         let mut updated_task = task.clone();
         updated_task.status = TaskStatus::Sleeping;
         let time_delta = parse(&duration).unwrap();
@@ -276,7 +352,6 @@ impl TaskList {
     }
 }
 
-
 // xref: /usr/local/develop/rust-commandline-example/src/main.rs
 
 #[cfg(test)]
@@ -288,14 +363,18 @@ pub mod tests {
     pub fn __create_temp_db(initial_task_count: i32) -> String {
         use std::path::Path;
         fs::create_dir_all("data/temp").unwrap();
-        let db = format!("data/temp/{}-test.json",Uuid::new_v4().simple());
+        let db = format!("data/temp/{}-test.json", Uuid::new_v4().simple());
         if Path::new(&db).exists() {
             panic!("Temporary test database already exists: {}", db);
         }
 
         let mut task_list = TaskList::new(db.clone());
         for i in 0..initial_task_count {
-            task_list.add_task(Task::new(format!("test task {i}").to_string(), "quick".to_string(), true));
+            task_list.add_task(Task::new(
+                format!("test task {i}").to_string(),
+                "quick".to_string(),
+                true,
+            ));
         }
         db
     }
@@ -304,7 +383,10 @@ pub mod tests {
     pub fn __destroy_temp_db(test_db: String) -> String {
         use std::path::Path;
 
-        if test_db.starts_with("data/temp") && test_db.ends_with("-test.json") && Path::new(&test_db).exists() {
+        if test_db.starts_with("data/temp")
+            && test_db.ends_with("-test.json")
+            && Path::new(&test_db).exists()
+        {
             let _ = fs::remove_file(&test_db);
         }
         test_db.to_string()
