@@ -7,6 +7,11 @@ use std::fs::File;
 use std::io::{self, Write};
 
 pub struct TaskList {
+    // pub active_tasks: VecDeque<Task>,
+    // pub backlog_tasks: VecDeque<Task>,
+    // pub blocked_tasks: VecDeque<Task>,
+    // pub completed_tasks: VecDeque<Task>,
+    // pub sleeping_tasks: VecDeque<Task>,
     pub tasks: BinaryHeap<Task>,
     pub db_path: String,
 }
@@ -26,9 +31,9 @@ impl TaskList {
         match result {
             Ok(tasks) => {
                 let mut task_list = TaskList { tasks, db_path };
-                let woken = task_list.wake_tasks();
-                if woken > 0 {
-                    println!("Woke {} task(s)", woken);
+                let awakened = task_list.wake_tasks();
+                if awakened > 0 {
+                    println!("Awakened {} task(s)", awakened);
                 }
                 let unblocked = task_list.unblock_tasks();
                 if unblocked > 0 {
