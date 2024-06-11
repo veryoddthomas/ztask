@@ -122,6 +122,7 @@ enum Command {
 }
 
 use std::path::Path;
+use std::vec;
 
 fn create_path(file_path: &str) -> std::io::Result<()> {
     // Create a Path from the provided file_path
@@ -264,7 +265,7 @@ pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
         }
     } else {
         // No subcommand, so just list the active task
-        match process_list(&mut task_list, args.verbose, false) {
+        match process_show(&mut task_list, args.verbose, vec![]) {
             Ok(_) => (),
             Err(e) => eprintln!("error in processing : {}", e),
         }
@@ -284,7 +285,13 @@ fn process_show(
         tasks.retain(|task| task.status == TaskStatus::Active);
 
         if tasks.is_empty() {
-            return Ok(0);
+            // Activate the next backlog task and re-process the task list
+            process_start(task_list, vec![])?;
+            tasks = task_list.tasks.clone();
+            tasks.retain(|task| task.status == TaskStatus::Active);
+            if tasks.is_empty() {
+                return Ok(0);
+            }
         }
 
         let mut tasks = tasks.into_sorted_vec();
