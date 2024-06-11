@@ -48,7 +48,7 @@ enum Command {
         #[clap(short, long, action=ArgAction::Count)]
         verbose: u8,
     },
-    /// Show specific tasks
+    /// Show specific tasks.  Shows currently active tasks by default.
     Show {
         /// Increase logging verbosity
         #[clap(short, long, action=ArgAction::Count)]
@@ -285,9 +285,11 @@ fn process_show(
         tasks.retain(|task| task.status == TaskStatus::Active);
 
         if tasks.is_empty() {
-            // Activate the next backlog task and re-process the task list
+            // Activate the next backlog task
             process_start(task_list, vec![])?;
-            tasks = task_list.tasks.clone();
+
+            // Check to see if there are any active tasks now
+            tasks.clone_from(&task_list.tasks);
             tasks.retain(|task| task.status == TaskStatus::Active);
             if tasks.is_empty() {
                 return Ok(0);
