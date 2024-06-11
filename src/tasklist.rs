@@ -48,6 +48,21 @@ impl TaskList {
         }
     }
 
+    /// Save the task list to the database file.
+    pub fn save(&self) -> Result<(), io::Error> {
+        let serialized = serde_json::to_string_pretty(&self.tasks)?;
+        let mut file = File::create(&self.db_path)?;
+        file.write_all(serialized.as_bytes())?;
+        Ok(())
+    }
+
+    /// Load the task list from the database file.
+    pub fn load(db_path: String) -> Result<BinaryHeap<Task>, io::Error> {
+        let contents = fs::read_to_string(db_path)?;
+        let tasks: BinaryHeap<Task> = serde_json::from_str(&contents)?;
+        Ok(tasks)
+    }
+
     /// Return the number of tasks in the list.
     pub fn num_tasks(&self) -> usize {
         self.tasks.len()
@@ -130,21 +145,6 @@ impl TaskList {
         }
         self.tasks = updated_tasks;
         num_unblocked
-    }
-
-    /// Save the task list to the database file.
-    pub fn save(&self) -> Result<(), io::Error> {
-        let serialized = serde_json::to_string_pretty(&self.tasks)?;
-        let mut file = File::create(&self.db_path)?;
-        file.write_all(serialized.as_bytes())?;
-        Ok(())
-    }
-
-    /// Load the task list from the database file.
-    pub fn load(db_path: String) -> Result<BinaryHeap<Task>, io::Error> {
-        let contents = fs::read_to_string(db_path)?;
-        let tasks: BinaryHeap<Task> = serde_json::from_str(&contents)?;
-        Ok(tasks)
     }
 
     /// Add a task to the list.
