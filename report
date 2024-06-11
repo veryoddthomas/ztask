@@ -27,4 +27,6 @@ llvm-cov report \
     --ignore-filename-regex='/.cargo/registry' \
     --ignore-filename-regex='library/std/src' \
     --ignore-filename-regex='/main.rs' \
+    --show-branch-summary=false \
+    --show-region-summary=false \
     # and/or other options

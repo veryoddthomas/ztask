@@ -1,7 +1,7 @@
 #!/bin/bash
 clear
 
-figlet -w 120 Running clippy checker
+figlet -w 120 Running tests
 
 cargo test
 if [ $? -ne 0 ]; then
@@ -13,9 +13,23 @@ fi
 
 printf "\n"
 
+figlet -w 120 Running clippy checker
+
 cargo clippy --all --all-targets -- -D warnings
 if [ $? -ne 0 ]; then
-  figlet -w 120 Time to clean up
+  figlet -w 120 Clippy issues to Fix
+  exit 1
+# else
+#   figlet -w 120 Clean!
+fi
+
+printf "\n"
+
+figlet -w 120 Running style checker
+
+cargo fmt --check
+if [ $? -ne 0 ]; then
+  figlet -w 120 Style issues to Fix
   exit 1
 else
   figlet -w 120 Clean!
