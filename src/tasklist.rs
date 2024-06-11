@@ -6,6 +6,8 @@ use std::fs;
 use std::fs::File;
 use std::io::{self, Write};
 
+/// Task list data structure, includeing a priority queue of tasks
+/// and a database path.
 pub struct TaskList {
     // pub active_tasks: VecDeque<Task>,
     // pub backlog_tasks: VecDeque<Task>,
@@ -68,28 +70,6 @@ impl TaskList {
         self.tasks.len()
     }
 
-    /// Clone a task
-    pub fn copy_task(&mut self, id: String) -> Option<Task> {
-        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
-        let match_count = tasks.count();
-        if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
-            return None;
-        }
-
-        // There will be only one match, so unwrap is safe
-        let task = self
-            .tasks
-            .iter()
-            .find(|task| task.id[0..id.len()] == id)
-            .unwrap();
-
-        Some(task.clone())
-    }
-
     /// Wake any tasks whose snooze timer has expired
     pub fn wake_tasks(&mut self) -> usize {
         let mut num_woken = 0;
@@ -145,6 +125,28 @@ impl TaskList {
         }
         self.tasks = updated_tasks;
         num_unblocked
+    }
+
+    /// Clone a task
+    pub fn copy_task(&mut self, id: String) -> Option<Task> {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+        let match_count = tasks.count();
+        if match_count != 1 {
+            println!(
+                "Id '{}' does not uniquely match one task.  It matches {}",
+                id, match_count
+            );
+            return None;
+        }
+
+        // There will be only one match, so unwrap is safe
+        let task = self
+            .tasks
+            .iter()
+            .find(|task| task.id[0..id.len()] == id)
+            .unwrap();
+
+        Some(task.clone())
     }
 
     /// Add a task to the list.
