@@ -117,7 +117,7 @@ impl Task {
         let mut temp_file = tempfile::Builder::new().suffix(".json").tempfile()?;
 
         // Write some content to the temporary file
-        writeln!(temp_file, "{}", serialized)?;
+        writeln!(temp_file, "{serialized}")?;
 
         // Get the path to the temporary file
         let file_path = temp_file.path();

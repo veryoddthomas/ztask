@@ -150,10 +150,10 @@ pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
                 match process_list(&mut task_list, std::cmp::max(args.verbose, verbose), true) {
                     Ok(c) => {
                         if args.verbose > 0 {
-                            println!("{} task(s) found", c)
+                            println!("{c} task(s) found");
                         }
                     }
-                    Err(e) => eprintln!("error in processing : {}", e),
+                    Err(e) => eprintln!("error in processing : {e}"),
                 }
             }
             Command::Show { task_ids, verbose } => match process_show(
@@ -163,10 +163,10 @@ pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
             ) {
                 Ok(c) => {
                     if args.verbose > 0 {
-                        println!("{} task(s) updated", c)
+                        println!("{c} task(s) updated");
                     }
                 }
-                Err(e) => eprintln!("error in processing : {}", e),
+                Err(e) => eprintln!("error in processing : {e}"),
             },
             Command::Add {
                 task_names,
@@ -175,60 +175,60 @@ pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
             } => match process_add(&mut task_list, task_names.unwrap_or_default(), is_interrupt) {
                 Ok(ids) => {
                     if args.verbose > 0 {
-                        println!("created task(s) {:?}", ids);
+                        println!("created task(s) {ids:?}");
                     }
                     if edit {
                         // Invoke editor on each new task
                         match process_edit(&mut task_list, ids, false) {
                             Ok(c) => {
                                 if args.verbose > 0 {
-                                    println!("edited {} task(s)", c);
+                                    println!("edited {c} task(s)");
                                 }
                             }
-                            Err(e) => eprintln!("error in processing : {}", e),
+                            Err(e) => eprintln!("error in processing : {e}"),
                         }
                     }
                 }
-                Err(e) => eprintln!("error in processing : {}", e),
+                Err(e) => eprintln!("error in processing : {e}"),
             },
             Command::Start { task_ids } => {
                 match process_start(&mut task_list, task_ids.unwrap_or_default()) {
                     Ok(c) => {
                         if args.verbose > 0 {
-                            println!("{} task(s) started", c)
+                            println!("{c} task(s) started");
                         }
                     }
-                    Err(e) => eprintln!("error in processing : {}", e),
+                    Err(e) => eprintln!("error in processing : {e}"),
                 }
             }
             Command::Stop { task_ids } => {
                 match process_stop(&mut task_list, task_ids.unwrap_or_default()) {
                     Ok(c) => {
                         if args.verbose > 0 {
-                            println!("{} task(s) stopped", c)
+                            println!("{c} task(s) stopped");
                         }
                     }
-                    Err(e) => eprintln!("error in processing : {}", e),
+                    Err(e) => eprintln!("error in processing : {e}"),
                 }
             }
             Command::Sleep { task_ids, duration } => {
                 match process_sleep(&mut task_list, task_ids.unwrap_or_default(), duration) {
                     Ok(c) => {
                         if args.verbose > 0 {
-                            println!("{} task(s) suspended", c)
+                            println!("{c} task(s) suspended");
                         }
                     }
-                    Err(e) => eprintln!("error in processing : {}", e),
+                    Err(e) => eprintln!("error in processing : {e}"),
                 }
             }
             Command::Del { task_ids } => {
                 match process_del(&mut task_list, task_ids.unwrap_or_default()) {
                     Ok(c) => {
                         if args.verbose > 0 {
-                            println!("{} task(s) removed", c)
+                            println!("{c} task(s) removed");
                         }
                     }
-                    Err(e) => eprintln!("error in processing : {}", e),
+                    Err(e) => eprintln!("error in processing : {e}"),
                 }
             }
             Command::Edit {
@@ -237,29 +237,29 @@ pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
             } => match process_edit(&mut task_list, task_ids.unwrap_or_default(), details_only) {
                 Ok(c) => {
                     if args.verbose > 0 {
-                        println!("{} task(s) updated", c)
+                        println!("{c} task(s) updated");
                     }
                 }
-                Err(e) => eprintln!("error in processing : {}", e),
+                Err(e) => eprintln!("error in processing : {e}"),
             },
             Command::Block { task_ids } => {
                 match process_block_on(&mut task_list, task_ids.unwrap_or_default()) {
                     Ok(c) => {
                         if args.verbose > 0 {
-                            println!("{} task(s) updated", c)
+                            println!("{c} task(s) updated");
                         }
                     }
-                    Err(e) => eprintln!("error in processing : {}", e),
+                    Err(e) => eprintln!("error in processing : {e}"),
                 }
             }
             Command::Complete { task_ids } => {
                 match process_complete(&mut task_list, task_ids.unwrap_or_default()) {
                     Ok(c) => {
                         if args.verbose > 0 {
-                            println!("{} task(s) updated", c)
+                            println!("{c} task(s) updated");
                         }
                     }
-                    Err(e) => eprintln!("error in processing : {}", e),
+                    Err(e) => eprintln!("error in processing : {e}"),
                 }
             }
         }
@@ -267,7 +267,7 @@ pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
         // No subcommand, so just list the active task
         match process_show(&mut task_list, args.verbose, vec![]) {
             Ok(_) => (),
-            Err(e) => eprintln!("error in processing : {}", e),
+            Err(e) => eprintln!("error in processing : {e}"),
         }
     }
 
@@ -314,7 +314,7 @@ fn process_show(
                     print_task_oneline(&task, true);
                 }
             } else {
-                println!("task {} not found", id);
+                println!("task {id} not found");
             }
         }
     }
@@ -836,7 +836,7 @@ mod tests {
     fn verify_command_list() {
         let db = __create_temp_db(5);
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "list"]);
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -847,7 +847,7 @@ mod tests {
     fn verify_add_default() {
         let db = __create_temp_db(0);
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "add"]);
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -858,7 +858,7 @@ mod tests {
         let args: Arguments =
             Arguments::parse_from(["ztask", "--db", &db, "-v", "add", "test task"]);
         // Should create 1 task with name "test task"
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -878,7 +878,7 @@ mod tests {
             "task4",
         ]);
         // Should create 4 tasks with names "test task #1", "test task #2", "task3", "task4"
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -890,7 +890,7 @@ mod tests {
             "ztask", "--db", &db, "-v", "add", "create", "single", "task",
         ]);
         // Should create 1 task with name "create single task"
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -901,7 +901,7 @@ mod tests {
     fn verify_delete_default() {
         let db = __create_temp_db(0);
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del"]);
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -914,7 +914,7 @@ mod tests {
         let id = iter.next().unwrap().id.clone();
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del", &id]);
         drop(task_list);
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -924,7 +924,7 @@ mod tests {
         let db = __create_temp_db(0);
         let id = "invalid";
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del", id]);
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -935,7 +935,7 @@ mod tests {
     fn verify_edit_default() {
         let db = __create_temp_db(0);
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "edit"]);
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }
@@ -948,7 +948,7 @@ mod tests {
         let id = iter.next().unwrap().id.clone();
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "edit", &id]);
         drop(task_list);
-        println!("args: {:?}", args);
+        println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(db);
     }

@@ -35,11 +35,11 @@ impl TaskList {
                 let mut task_list = TaskList { tasks, db_path };
                 let awakened = task_list.wake_tasks();
                 if awakened > 0 {
-                    println!("Awakened {} task(s)", awakened);
+                    println!("Awakened {awakened} task(s)");
                 }
                 let unblocked = task_list.unblock_tasks();
                 if unblocked > 0 {
-                    println!("Unblocked {} task(s)", unblocked);
+                    println!("Unblocked {unblocked} task(s)");
                 }
                 task_list
             }
@@ -132,10 +132,7 @@ impl TaskList {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
+            println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return None;
         }
 
@@ -166,13 +163,10 @@ impl TaskList {
             .filter(|task| task.id[0..id.len()] == id)
             .count();
         if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
+            println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return;
         }
-        self.tasks.retain(|task| task.id[0..id.len()] != id)
+        self.tasks.retain(|task| task.id[0..id.len()] != id);
     }
 
     /// Block the blockee on the blocker(s)
@@ -186,9 +180,7 @@ impl TaskList {
             .count();
         if blockee_match_count != 1 {
             println!(
-                "Blockee Id '{}' does not uniquely match one task.  It matches {}",
-                blockee_id, blockee_match_count
-            );
+                "Blockee Id '{blockee_id}' does not uniquely match one task.  It matches {blockee_match_count}");
             return 0;
         }
         let blocker_match_count = self
@@ -198,9 +190,7 @@ impl TaskList {
             .count();
         if blocker_match_count != 1 {
             println!(
-                "Blocker Id '{}' does not uniquely match one task.  It matches {}",
-                blocker_id, blocker_match_count
-            );
+                "Blocker Id '{blocker_id}' does not uniquely match one task.  It matches {blocker_match_count}");
             return 0;
         }
         // There will be only one match, so unwrap is safe
@@ -230,10 +220,7 @@ impl TaskList {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
+            println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return 0;
         }
 
@@ -256,10 +243,7 @@ impl TaskList {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
+            println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return 0;
         }
 
@@ -282,10 +266,7 @@ impl TaskList {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
+            println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return 0;
         }
 
@@ -308,10 +289,7 @@ impl TaskList {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
+            println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return 0;
         }
 
@@ -334,10 +312,7 @@ impl TaskList {
         let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
         let match_count = tasks.count();
         if match_count != 1 {
-            println!(
-                "Id '{}' does not uniquely match one task.  It matches {}",
-                id, match_count
-            );
+            println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return 0;
         }
 
@@ -372,7 +347,7 @@ pub mod tests {
         fs::create_dir_all("data/temp").unwrap();
         let db = format!("data/temp/{}-test.json", Uuid::new_v4().simple());
         if Path::new(&db).exists() {
-            panic!("Temporary test database already exists: {}", db);
+            panic!("Temporary test database already exists: {db}");
         }
 
         let mut task_list = TaskList::new(db.clone());

@@ -15,7 +15,7 @@ printf "\n"
 
 figlet -w 120 Running clippy checker
 
-cargo clippy --all --all-targets -- -D warnings
+cargo clippy --all --all-targets -- -D warnings --deny clippy::pedantic
 if [ $? -ne 0 ]; then
   figlet -w 120 Clippy issues to Fix
   exit 1
