@@ -495,7 +495,7 @@ fn print_task_oneline(task: &Task, show_status: bool) {
 
     // let summary = task.summary.to_string().bright_black();
     let blocked = if task.blocked_by.is_empty() {
-        "".bright_red()
+        String::new().bright_red()
     } else {
         format!(
             "[{}]",
@@ -514,7 +514,7 @@ fn print_task_oneline(task: &Task, show_status: bool) {
 
 pub fn print_task_detailed(task: &Task) {
     let blocked = if task.blocked_by.is_empty() {
-        "".to_string().slate_blue()
+        String::new().to_string().slate_blue()
     } else {
         task.blocked_by
             .iter()
@@ -555,7 +555,9 @@ pub fn print_task_detailed(task: &Task) {
     }
     if !task.details.is_empty() {
         // let details = str::replace(&task.details, "!", "?");
-        let details = task.details.replace('\n', &format!("\n  {:width$} ", ""));
+        let details = task
+            .details
+            .replace('\n', &format!("\n  {:width$} ", String::new()));
         println!(
             "  {:width$} {}",
             "details:".bright_white(),
@@ -822,7 +824,7 @@ mod tests {
         }
     }
 
-    // Tests for "list""
+    // Tests for "list"
 
     #[test]
     fn verify_command_list() {
