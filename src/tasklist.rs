@@ -364,14 +364,14 @@ pub mod tests {
     }
 
     /// Remove the named test database
-    pub fn __destroy_temp_db(test_db: String) -> String {
+    pub fn __destroy_temp_db(test_db: &str) -> String {
         use std::path::Path;
 
         if test_db.starts_with("data/temp")
             && test_db.ends_with("-test.json")
-            && Path::new(&test_db).exists()
+            && Path::new(test_db).exists()
         {
-            let _ = fs::remove_file(&test_db);
+            let _ = fs::remove_file(test_db);
         }
         test_db.to_string()
     }
@@ -388,7 +388,7 @@ pub mod tests {
         assert_eq!(task_list.tasks.len(), 1);
 
         drop(task_list);
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     #[test]
@@ -403,6 +403,6 @@ pub mod tests {
         assert_eq!(task_list.tasks.len(), 2);
 
         drop(task_list);
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 }

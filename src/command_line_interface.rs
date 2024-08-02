@@ -832,7 +832,7 @@ mod tests {
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "list"]);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     // Tests for "add"
@@ -843,7 +843,7 @@ mod tests {
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "add"]);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     #[test]
@@ -854,7 +854,7 @@ mod tests {
         // Should create 1 task with name "test task"
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     #[test]
@@ -874,7 +874,7 @@ mod tests {
         // Should create 4 tasks with names "test task #1", "test task #2", "task3", "task4"
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     #[test]
@@ -886,7 +886,7 @@ mod tests {
         // Should create 1 task with name "create single task"
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     // Tests for "del"
@@ -897,7 +897,7 @@ mod tests {
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del"]);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     #[test]
@@ -910,7 +910,7 @@ mod tests {
         drop(task_list);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     #[test]
@@ -920,7 +920,7 @@ mod tests {
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "del", id]);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     // Tests for "edit"
@@ -931,7 +931,7 @@ mod tests {
         let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "edit"]);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 
     #[test]
@@ -944,6 +944,6 @@ mod tests {
         drop(task_list);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
-        __destroy_temp_db(db);
+        __destroy_temp_db(&db);
     }
 }
