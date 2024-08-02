@@ -170,6 +170,7 @@ impl TaskList {
     }
 
     /// Block the blockee on the blocker(s)
+    #[allow(clippy::similar_names)]
     pub fn block_task_on(&mut self, blockee_id: &String, blocker_id: &String) -> usize {
         // If we don't find exactly one task that starts with 'id',
         // print a warning and return
@@ -346,9 +347,10 @@ pub mod tests {
         use std::path::Path;
         fs::create_dir_all("data/temp").unwrap();
         let db = format!("data/temp/{}-test.json", Uuid::new_v4().simple());
-        if Path::new(&db).exists() {
-            panic!("Temporary test database already exists: {db}");
-        }
+        assert!(
+            !Path::new(&db).exists(),
+            "Temporary test database already exists: {db}"
+        );
 
         let mut task_list = TaskList::new(db.clone());
         for i in 0..initial_task_count {

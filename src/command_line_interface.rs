@@ -147,13 +147,9 @@ pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
     if let Some(subcmd) = args.command {
         match subcmd {
             Command::List { verbose } => {
-                match process_list(&mut task_list, std::cmp::max(args.verbose, verbose), true) {
-                    Ok(c) => {
-                        if args.verbose > 0 {
-                            println!("{c} task(s) found");
-                        }
-                    }
-                    Err(e) => eprintln!("error in processing : {e}"),
+                let c = process_list(&mut task_list, std::cmp::max(args.verbose, verbose), true);
+                if args.verbose > 0 {
+                    println!("{c} task(s) found");
                 }
             }
             Command::Show { task_ids, verbose } => match process_show(
@@ -321,11 +317,7 @@ fn process_show(
     Ok(processed_task_count)
 }
 
-fn process_list(
-    task_list: &mut tasklist::TaskList,
-    verbosity: u8,
-    show_all: bool,
-) -> Result<usize, Box<dyn Error>> {
+fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8, show_all: bool) -> usize {
     if show_all {
         print_categorized_task_list(task_list, verbosity);
     } else {
@@ -333,7 +325,7 @@ fn process_list(
         tasks.retain(|task| task.status == TaskStatus::Active);
 
         if tasks.is_empty() {
-            return Ok(0);
+            return 0;
         }
 
         let mut tasks = tasks.into_sorted_vec();
@@ -345,22 +337,11 @@ fn process_list(
             print_task_oneline(&task, true);
         }
     }
-    Ok(task_list.tasks.len())
+    task_list.tasks.len()
 }
 
 /// Print all tasks
 fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
-    show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
-    show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
-    show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
-    show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
-    show_list(
-        "Completed Tasks",
-        TaskStatus::Completed,
-        task_list,
-        verbosity,
-    );
-
     fn show_list(
         heading: &str,
         status: TaskStatus,
@@ -395,6 +376,16 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
             }
         }
     }
+    show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
+    show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
+    show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
+    show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
+    show_list(
+        "Completed Tasks",
+        TaskStatus::Completed,
+        task_list,
+        verbosity,
+    );
 }
 
 // fn red(s: &str) -> ColoredString { s.red() }
@@ -823,7 +814,7 @@ mod tests {
     use tasklist::tests::__destroy_temp_db;
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "--undefined-flag-guaranteed failed as expected")]
     fn test_invalid_args() {
         if let Err(_err) = Arguments::try_parse_from(["ztask", "--undefined-flag-guaranteed"]) {
             panic!("--undefined-flag-guaranteed failed as expected");
