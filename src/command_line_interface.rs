@@ -138,6 +138,7 @@ fn create_path(file_path: &str) -> std::io::Result<()> {
     Ok(())
 }
 
+#[allow(clippy::too_many_lines)]
 pub fn run(arg_overrides: Option<Arguments>) -> Result<(), Box<dyn Error>> {
     let args = arg_overrides.unwrap_or(Arguments::parse());
     let db_path = shellexpand::env(&args.db)?;
@@ -344,18 +345,18 @@ fn process_list(task_list: &mut tasklist::TaskList, verbosity: u8, show_all: boo
 fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
     fn show_list(
         heading: &str,
-        status: TaskStatus,
+        status: &TaskStatus,
         task_list: &tasklist::TaskList,
         _verbosity: u8,
     ) {
         let mut tasks = task_list.tasks.clone();
-        tasks.retain(|task| task.status == status);
+        tasks.retain(|task| task.status == *status);
         let mut tasks = tasks.into_sorted_vec();
 
         if !tasks.is_empty() {
             println!("{}:", heading.bright_white().underline());
 
-            if status == TaskStatus::Active {
+            if *status == TaskStatus::Active {
                 // Print the first active task normally
                 let task = tasks.remove(0);
                 print_task_oneline(&task, false);
@@ -376,13 +377,18 @@ fn print_categorized_task_list(task_list: &tasklist::TaskList, verbosity: u8) {
             }
         }
     }
-    show_list("Active Tasks", TaskStatus::Active, task_list, verbosity);
-    show_list("Backlog Tasks", TaskStatus::Backlog, task_list, verbosity);
-    show_list("Blocked Tasks", TaskStatus::Blocked, task_list, verbosity);
-    show_list("Sleeping Tasks", TaskStatus::Sleeping, task_list, verbosity);
+    show_list("Active Tasks", &TaskStatus::Active, task_list, verbosity);
+    show_list("Backlog Tasks", &TaskStatus::Backlog, task_list, verbosity);
+    show_list("Blocked Tasks", &TaskStatus::Blocked, task_list, verbosity);
+    show_list(
+        "Sleeping Tasks",
+        &TaskStatus::Sleeping,
+        task_list,
+        verbosity,
+    );
     show_list(
         "Completed Tasks",
-        TaskStatus::Completed,
+        &TaskStatus::Completed,
         task_list,
         verbosity,
     );
@@ -394,7 +400,7 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
     let id = set_color(&task.id[..9]);
     let priority = set_color(&task.priority.to_string());
 
-    print!("  {}  {}", id, priority);
+    print!("  {id}  {priority}");
     print!("  {}", set_color(&task.created_at.format("%F").to_string()));
 
     let summary = set_color(&task.summary.to_string());
@@ -434,20 +440,16 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
         let mut duration_fragments: Vec<String> = vec![];
 
         if days > 0 {
-            // duration_string.push_str(&format!("{}d ", days));
-            duration_fragments.push(format!("{}d", days));
+            duration_fragments.push(format!("{days}d"));
         }
         if hours > 0 {
-            // duration_string.push_str(&format!("{}h ", hours));
-            duration_fragments.push(format!("{}h", hours));
+            duration_fragments.push(format!("{hours}h"));
         }
         if minutes > 0 {
-            // duration_string.push_str(&format!("{}m ", minutes));
-            duration_fragments.push(format!("{}m", minutes));
+            duration_fragments.push(format!("{minutes}m"));
         }
         if seconds > 0 {
-            // duration_string.push_str(&format!("{}s ", seconds));
-            duration_fragments.push(format!("{}s", seconds));
+            duration_fragments.push(format!("{seconds}s"));
         }
         // let s = duration_fragments.join(" ");
         duration_string.push_str(&duration_fragments.join(" "));
@@ -455,12 +457,12 @@ fn print_task_oneline_with_format_override(task: &Task, set_color: fn(&str) -> C
         set_color(&duration_string)
     };
 
-    print!("  {}", summary);
+    print!("  {summary}");
     if !task.blocked_by.is_empty() {
-        print!("  {}", blocked);
+        print!("  {blocked}");
     }
     if task.wake_at.is_some() {
-        print!("  {}", wake_at);
+        print!("  {wake_at}");
     }
     println!();
 }
@@ -475,13 +477,12 @@ fn print_task_oneline(task: &Task, show_status: bool) {
         TaskStatus::Active => id.bright_green(),
         TaskStatus::Backlog => id.white(),
         TaskStatus::Blocked => id.bright_red(),
-        TaskStatus::Sleeping => id.bright_black(),
-        TaskStatus::Completed => id.bright_black(),
+        TaskStatus::Sleeping | TaskStatus::Completed => id.bright_black(),
     };
     let priority = task.priority.to_string().bright_black();
 
-    print!("  {}", id);
-    print!("  {}", priority);
+    print!("  {id}");
+    print!("  {priority}");
     if show_status {
         print!("  {}", task.status.to_string().bright_black());
     }
@@ -507,7 +508,7 @@ fn print_task_oneline(task: &Task, show_status: bool) {
         .bright_red()
     };
 
-    print!("  {}  {}", task.summary.to_string().white(), blocked);
+    print!("  {}  {blocked}", task.summary.to_string().white());
     println!();
 }
 
@@ -550,7 +551,7 @@ pub fn print_task_detailed(task: &Task) {
         task.created_at.format("%F %T").to_string().bright_black()
     );
     if task.status == TaskStatus::Blocked {
-        println!("  {:width$} {}", "blocked by:".bright_white(), blocked);
+        println!("  {:width$} {blocked}", "blocked by:".bright_white());
     }
     if !task.details.is_empty() {
         // let details = str::replace(&task.details, "!", "?");
