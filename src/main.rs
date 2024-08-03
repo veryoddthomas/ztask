@@ -3,6 +3,7 @@
 use std::process;
 
 mod command_line_interface;
+mod simple_duration;
 mod task;
 mod tasklist;
 
