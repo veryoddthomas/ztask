@@ -1,4 +1,4 @@
-use crate::task::{Task, TaskStatus};
+use crate::task::{Status, Task};
 use chrono::Local;
 use parse_duration::parse;
 use std::collections::{BTreeSet, BinaryHeap};
@@ -80,8 +80,8 @@ impl TaskList {
 
         // Process every node in the BinaryHeap
         while let Some(mut task) = self.tasks.pop() {
-            if task.status == TaskStatus::Sleeping && task.wake_at.unwrap() <= now {
-                task.status = TaskStatus::Backlog;
+            if task.status == Status::Sleeping && task.wake_at.unwrap() <= now {
+                task.status = Status::Backlog;
                 task.wake_at = None;
                 num_woken += 1;
             }
@@ -100,7 +100,7 @@ impl TaskList {
         let blocking_capable_ids: BTreeSet<String> = self
             .tasks
             .iter()
-            .filter(|task| task.status != TaskStatus::Completed)
+            .filter(|task| task.status != Status::Completed)
             .map(|task| task.id.clone())
             .collect();
 
@@ -109,7 +109,7 @@ impl TaskList {
 
         // Process every node in the BinaryHeap
         while let Some(mut task) = self.tasks.pop() {
-            if task.status == TaskStatus::Blocked {
+            if task.status == Status::Blocked {
                 let intersection: BTreeSet<_> = task
                     .blocked_by
                     .intersection(&blocking_capable_ids)
@@ -117,7 +117,7 @@ impl TaskList {
                     .collect();
                 task.blocked_by = intersection;
                 if task.blocked_by.is_empty() {
-                    task.status = TaskStatus::Backlog;
+                    task.status = Status::Backlog;
                     num_unblocked += 1;
                 }
             }
@@ -128,8 +128,8 @@ impl TaskList {
     }
 
     /// Clone a task
-    pub fn copy_task(&mut self, id: String) -> Option<Task> {
-        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+    pub fn copy_task(&mut self, id: &str) -> Option<Task> {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == *id);
         let match_count = tasks.count();
         if match_count != 1 {
             println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
@@ -140,7 +140,7 @@ impl TaskList {
         let task = self
             .tasks
             .iter()
-            .find(|task| task.id[0..id.len()] == id)
+            .find(|task| task.id[0..id.len()] == *id)
             .unwrap();
 
         Some(task.clone())
@@ -154,19 +154,19 @@ impl TaskList {
     }
 
     /// Remove the task whose id starts with the id string passed in.
-    pub fn remove_task(&mut self, id: String) {
+    pub fn remove_task(&mut self, id: &str) {
         // If we don't find exactly one task that starts with 'id',
         // print a warning and return
         let match_count = self
             .tasks
             .iter()
-            .filter(|task| task.id[0..id.len()] == id)
+            .filter(|task| task.id[0..id.len()] == *id)
             .count();
         if match_count != 1 {
             println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
             return;
         }
-        self.tasks.retain(|task| task.id[0..id.len()] != id);
+        self.tasks.retain(|task| task.id[0..id.len()] != *id);
     }
 
     /// Block the blockee on the blocker(s)
@@ -217,8 +217,8 @@ impl TaskList {
     }
 
     /// Edit the task whose id starts with the id string passed in.
-    pub fn edit_task(&mut self, id: String) -> usize {
-        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+    pub fn edit_task(&mut self, id: &str) -> usize {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == *id);
         let match_count = tasks.count();
         if match_count != 1 {
             println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
@@ -229,7 +229,7 @@ impl TaskList {
         let task = self
             .tasks
             .iter()
-            .find(|task| task.id[0..id.len()] == id)
+            .find(|task| task.id[0..id.len()] == *id)
             .unwrap();
         let mut updated_task = task.clone();
         updated_task.invoke_editor().unwrap_or_default(); // TODO: Handle errors
@@ -240,8 +240,8 @@ impl TaskList {
     }
 
     /// Edit the details for the task whose id starts with the id string passed in.
-    pub fn edit_task_details(&mut self, id: String) -> usize {
-        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+    pub fn edit_task_details(&mut self, id: &str) -> usize {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == *id);
         let match_count = tasks.count();
         if match_count != 1 {
             println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
@@ -252,7 +252,7 @@ impl TaskList {
         let task = self
             .tasks
             .iter()
-            .find(|task| task.id[0..id.len()] == id)
+            .find(|task| task.id[0..id.len()] == *id)
             .unwrap();
         let mut updated_task = task.clone();
         updated_task.invoke_editor_for_details().unwrap_or_default(); // TODO: Handle errors
@@ -263,8 +263,8 @@ impl TaskList {
     }
 
     /// Complete the task whose id starts with the id string passed in.
-    pub fn complete_task(&mut self, id: String) -> usize {
-        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+    pub fn complete_task(&mut self, id: &str) -> usize {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == *id);
         let match_count = tasks.count();
         if match_count != 1 {
             println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
@@ -275,10 +275,10 @@ impl TaskList {
         let task = self
             .tasks
             .iter()
-            .find(|task| task.id[0..id.len()] == id)
+            .find(|task| task.id[0..id.len()] == *id)
             .unwrap();
         let mut updated_task = task.clone();
-        updated_task.status = TaskStatus::Completed;
+        updated_task.status = Status::Completed;
         let id = task.id.clone();
         self.tasks.retain(|task| task.id != id);
         self.tasks.push(updated_task);
@@ -286,8 +286,8 @@ impl TaskList {
     }
 
     /// Start the task whose id starts with the id string passed in.
-    pub fn start_task(&mut self, id: String) -> usize {
-        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+    pub fn start_task(&mut self, id: &str) -> usize {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == *id);
         let match_count = tasks.count();
         if match_count != 1 {
             println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
@@ -298,10 +298,10 @@ impl TaskList {
         let task = self
             .tasks
             .iter()
-            .find(|task| task.id[0..id.len()] == id)
+            .find(|task| task.id[0..id.len()] == *id)
             .unwrap();
         let mut updated_task = task.clone();
-        updated_task.status = TaskStatus::Active;
+        updated_task.status = Status::Active;
         let id = task.id.clone();
         self.tasks.retain(|task| task.id != id);
         self.tasks.push(updated_task);
@@ -309,8 +309,8 @@ impl TaskList {
     }
 
     /// Suspend the task whose id starts with the id string passed in.
-    pub fn suspend_task(&mut self, id: String, duration: String) -> usize {
-        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == id);
+    pub fn suspend_task(&mut self, id: &str, duration: &str) -> usize {
+        let tasks = self.tasks.iter().filter(|task| task.id[0..id.len()] == *id);
         let match_count = tasks.count();
         if match_count != 1 {
             println!("Id '{id}' does not uniquely match one task.  It matches {match_count}");
@@ -321,11 +321,11 @@ impl TaskList {
         let task = self
             .tasks
             .iter()
-            .find(|task| task.id[0..id.len()] == id)
+            .find(|task| task.id[0..id.len()] == *id)
             .unwrap();
         let mut updated_task = task.clone();
-        updated_task.status = TaskStatus::Sleeping;
-        let time_delta = parse(&duration).unwrap();
+        updated_task.status = Status::Sleeping;
+        let time_delta = parse(duration).unwrap();
         println!("Sleeping for {} seconds", time_delta.as_secs());
         updated_task.wake_at = Some(Local::now() + time_delta);
         let id = task.id.clone();
@@ -384,7 +384,7 @@ pub mod tests {
         let mut iter = task_list.tasks.iter().skip(1);
         let id = iter.next().unwrap().id.clone();
 
-        task_list.remove_task(id);
+        task_list.remove_task(&id);
         assert_eq!(task_list.tasks.len(), 1);
 
         drop(task_list);
@@ -399,7 +399,7 @@ pub mod tests {
         let mut iter = task_list.tasks.iter().skip(1);
         let id = iter.next().unwrap().id.clone();
 
-        task_list.edit_task(id);
+        task_list.edit_task(&id);
         assert_eq!(task_list.tasks.len(), 2);
 
         drop(task_list);
