@@ -1,6 +1,6 @@
+use crate::simple_duration;
 use crate::task::{Status, Task};
 use chrono::Local;
-use parse_duration::parse;
 use std::collections::{BTreeSet, BinaryHeap};
 use std::fs;
 use std::fs::File;
@@ -325,8 +325,8 @@ impl TaskList {
             .unwrap();
         let mut updated_task = task.clone();
         updated_task.status = Status::Sleeping;
-        let time_delta = parse(duration).unwrap();
-        println!("Sleeping for {} seconds", time_delta.as_secs());
+        let time_delta = simple_duration::parse(duration).unwrap();
+        println!("Sleeping for {} seconds", time_delta.num_seconds());
         updated_task.wake_at = Some(Local::now() + time_delta);
         let id = task.id.clone();
         self.tasks.retain(|task| task.id != id);
