@@ -1,4 +1,5 @@
 use chrono::TimeDelta;
+use lazy_static::lazy_static;
 use regex::Regex;
 
 #[derive(Debug, PartialEq)]
@@ -12,10 +13,15 @@ const SECONDS_PER_DAY: i64 = SECONDS_PER_HOUR * 24;
 const SECONDS_PER_WEEK: i64 = SECONDS_PER_DAY * 7;
 
 pub fn parse(s: &str) -> Result<chrono::TimeDelta, Error> {
-    let re = Regex::new(r"(?P<value>\d+) *(?P<unit>[[:alpha:]\p{Greek}]*)").unwrap();
+    lazy_static! {
+        static ref DURATION_REGEX: Regex =
+            Regex::new(r"(?P<value>\d+) *(?P<unit>[[:alpha:]\p{Greek}]*)").unwrap();
+    }
+
+    // let re = Regex::new(r"(?P<value>\d+) *(?P<unit>[[:alpha:]\p{Greek}]*)").unwrap();
     let sign_multiplier = if s.starts_with("-") { -1 } else { 1 };
     let mut results = vec![];
-    for cap in re.captures_iter(s) {
+    for cap in DURATION_REGEX.captures_iter(s) {
         let value = cap.name("value").map(|m| m.as_str()).unwrap_or("");
         let unit = cap.name("unit").map(|m| m.as_str()).unwrap_or("");
         results.push((value, unit));
