@@ -756,18 +756,47 @@ mod tests {
         }
     }
 
-    // Tests for "list"
+    #[test]
+    fn verify_coloredstring() {
+        let s = String::new().to_string().slate_blue();
+        println!("args: {s:?}");
+    }
 
     #[test]
-    fn verify_command_list() {
+    fn verify_list() {
         let db = __create_temp_db(5);
-        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "list"]);
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "list"]);
         println!("args: {args:?}");
         run(Some(args)).unwrap();
         __destroy_temp_db(&db);
     }
 
-    // Tests for "add"
+    #[test]
+    fn verify_show() {
+        let db = __create_temp_db(5);
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "show"]);
+        println!("args: {args:?}");
+        run(Some(args)).unwrap();
+        __destroy_temp_db(&db);
+    }
+
+    #[test]
+    fn verify_start() {
+        let db = __create_temp_db(5);
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "start"]);
+        println!("args: {args:?}");
+        run(Some(args)).unwrap();
+        __destroy_temp_db(&db);
+    }
+
+    #[test]
+    fn verify_stop() {
+        let db = __create_temp_db(5);
+        let args: Arguments = Arguments::parse_from(["ztask", "--db", &db, "-v", "stop"]);
+        println!("args: {args:?}");
+        run(Some(args)).unwrap();
+        __destroy_temp_db(&db);
+    }
 
     #[test]
     fn verify_add_default() {
@@ -821,8 +850,6 @@ mod tests {
         __destroy_temp_db(&db);
     }
 
-    // Tests for "del"
-
     #[test]
     fn verify_delete_default() {
         let db = __create_temp_db(0);
@@ -854,8 +881,6 @@ mod tests {
         run(Some(args)).unwrap();
         __destroy_temp_db(&db);
     }
-
-    // Tests for "edit"
 
     #[test]
     fn verify_edit_default() {
