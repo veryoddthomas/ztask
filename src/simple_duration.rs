@@ -18,17 +18,16 @@ pub fn parse(s: &str) -> Result<chrono::TimeDelta, Error> {
             Regex::new(r"(?P<value>\d+) *(?P<unit>[[:alpha:]\p{Greek}]*)").unwrap();
     }
 
-    // let re = Regex::new(r"(?P<value>\d+) *(?P<unit>[[:alpha:]\p{Greek}]*)").unwrap();
-    let sign_multiplier = if s.starts_with("-") { -1 } else { 1 };
+    let sign_multiplier = if s.starts_with('-') { -1 } else { 1 };
     let mut results = vec![];
     for cap in DURATION_REGEX.captures_iter(s) {
-        let value = cap.name("value").map(|m| m.as_str()).unwrap_or("");
-        let unit = cap.name("unit").map(|m| m.as_str()).unwrap_or("");
+        let value = cap.name("value").map_or("", |m| m.as_str());
+        let unit = cap.name("unit").map_or("", |m| m.as_str());
         results.push((value, unit));
     }
 
     if results.is_empty() {
-        return Err(Error::ParseError(format!("invalid duration: '{}'", s)));
+        return Err(Error::ParseError(format!("invalid duration: '{s}'")));
     }
 
     let mut duration = 0;
