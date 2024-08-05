@@ -57,7 +57,7 @@ cargo tarpaulin --implicit-test-threads --command Build --out Html && wslview ta
 ## Checkers
 
 ```bash
-cargo clippy --all --all-targets -- -D warnings
+cargo clippy --all --all-targets -- -D warnings -D clippy::pedantic
 # note, this runs cargo check
 ```
 

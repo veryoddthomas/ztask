@@ -1,3 +1,6 @@
+//! Simple duration parser
+//!
+
 use chrono::TimeDelta;
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -12,6 +15,11 @@ const SECONDS_PER_HOUR: i64 = SECONDS_PER_MINUTE * 60;
 const SECONDS_PER_DAY: i64 = SECONDS_PER_HOUR * 24;
 const SECONDS_PER_WEEK: i64 = SECONDS_PER_DAY * 7;
 
+/// This function parses a string into a `chrono::TimeDelta`.
+///
+/// ## Examples
+///   * 1m -> 1 minute
+///   * 1h 35m -> 1 hour 35 minutes
 pub fn parse(s: &str) -> Result<chrono::TimeDelta, Error> {
     lazy_static! {
         static ref DURATION_REGEX: Regex =
