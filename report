@@ -26,6 +26,7 @@ llvm-cov report \
     --Xdemangler=rustfilt \
     --ignore-filename-regex='/.cargo/registry' \
     --ignore-filename-regex='library/std/src' \
+    --ignore-filename-regex='library/core/src' \
     --ignore-filename-regex='/main.rs' \
     --show-branch-summary=false \
     --show-region-summary=false \
