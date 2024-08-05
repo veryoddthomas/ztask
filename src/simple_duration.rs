@@ -21,6 +21,12 @@ const SECONDS_PER_WEEK: i64 = SECONDS_PER_DAY * 7;
 ///   * 1m -> 1 minute
 ///   * 1h 35m -> 1 hour 35 minutes
 pub fn parse(s: &str) -> Result<chrono::TimeDelta, Error> {
+    if s == "0" {
+        // Adding this for compatibility with previous CLI version using
+        // the parse_duration crate
+        return Ok(chrono::TimeDelta::seconds(0));
+    }
+
     lazy_static! {
         static ref DURATION_REGEX: Regex =
             Regex::new(r"(?P<value>\d+) *(?P<unit>[[:alpha:]\p{Greek}]*)").unwrap();
