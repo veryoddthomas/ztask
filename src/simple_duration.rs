@@ -69,12 +69,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_duration() -> Result<(), Error> {
+    fn test_parse_duration() {
         assert_eq!(parse("2s").unwrap().num_seconds(), 2);
         assert_eq!(parse("104s").unwrap().num_seconds(), 104);
         assert_eq!(parse("2m").unwrap().num_seconds(), 2 * SECONDS_PER_MINUTE);
         assert_eq!(parse("32d").unwrap().num_seconds(), 32 * SECONDS_PER_DAY);
-        assert_eq!(parse("1w").unwrap().num_seconds(), 1 * SECONDS_PER_WEEK);
+        assert_eq!(parse("3w").unwrap().num_seconds(), 3 * SECONDS_PER_WEEK);
         assert_eq!(
             parse("3m10s").unwrap().num_seconds(),
             (3 * SECONDS_PER_MINUTE) + 10
@@ -97,6 +97,5 @@ mod tests {
             parse("1q").unwrap_err(),
             Error::ParseError(String::from("invalid duration units: 'q'")),
         );
-        Ok(())
     }
 }
